@@ -193,7 +193,7 @@ public class Main {
             stringtime= time.text();
 
             // Get competition
-            Elements comp = matchpage.select("div[style=padding:5px;] > div[style=text-align:center;font-size: 18px;");
+            Elements comp = matchpage.select("div[style=padding:5px;] div[style=text-align:center;font-size: 18px;] a");
             String competition = comp.text();
 
 
