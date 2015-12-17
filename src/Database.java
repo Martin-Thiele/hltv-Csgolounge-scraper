@@ -9,7 +9,7 @@ import java.text.SimpleDateFormat;
 public class Database {
     // JDBC driver name and database URL
     static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-    static final String DB_URL = "jdbc:mysql://<DATABASE_URL>?useServerPrepStmts=false&rewriteBatchedStatements=true";
+    static final String DB_URL = "jdbc:mysql:/<DATABASE_URL>?useServerPrepStmts=false&rewriteBatchedStatements=true";
 
     // Database credentials
     static final String USER = "USER";
@@ -24,7 +24,7 @@ public class Database {
      * @param subcid - Subcompetition id
      * @param hltv   - hltv link
      */
-    public static void Insert(int team_1, int team_2, String date, String time, int mapid, int subcid, String csgllink, int odds1, int odds2, String hltv){
+    public static void insert(int team_1, int team_2, String date, String time, int mapid, int subcid, String csgllink, int odds1, int odds2, String hltv){
 
         if (team_1 == 0) {team_1 = 108;} // Error handling and change to team "TBD"
         if (team_2 == 0) {team_2 = 108;} // ^
@@ -92,7 +92,7 @@ public class Database {
      * @param subcid  - Subcompetition id
      * @param mid     - Matchid
      */
-    public static void Update(int team_1, int odds1, int team_2, int odds2, String date, String time, int mapid, int score_1, int score_2, int subcid, String csgllink, int mid, int complete) {
+    public static void update(int team_1, int odds1, int team_2, int odds2, String date, String time, int mapid, int score_1, int score_2, int subcid, String csgllink, int mid, int complete) {
         if (team_1 == 0) {
             team_1 = 108;
         } // Error handling and change to team "TBD"
@@ -263,7 +263,7 @@ public class Database {
     /** Gives a list of incomplete matches
      * @return ArrayList - Incomplete matches
      */
-    public static ArrayList<String> GetIncomplete(){
+    public static ArrayList<String> getIncomplete(){
         ArrayList<String> incommatches = new ArrayList<>();
         Connection conn = null;
         Statement stmt = null;
@@ -308,7 +308,7 @@ public class Database {
      * @param subcomp - Subcompetition name
      * @return int - Subcompetition id
      */
-    public static int SelectSubcid(String subcomp){
+    public static int selectSubcid(String subcomp){
         Connection conn = null;
         Statement stmt = null;
         String subfix = subcomp.replaceAll("'", "''");
@@ -343,7 +343,7 @@ public class Database {
         return subcid;
     }
 
-    public static int Selectmid(String hltv){
+    public static int selectmid(String hltv){
         Connection conn = null;
         Statement stmt = null;
         int mid = 0;
@@ -382,7 +382,7 @@ public class Database {
      * @param mapname - Name of map
      * @return int - mapid
      */
-    public static int SelectMapid(String mapname){
+    public static int selectMapid(String mapname){
         Connection conn = null;
         Statement stmt = null;
         int mapid = 0;
@@ -420,7 +420,7 @@ public class Database {
      * @param team - Name of team
      * @return int - Team id
      */
-    public static int SelectTid(String team){
+    public static int selectTid(String team){
         Connection conn = null;
         Statement stmt = null;
         int tid = 0;
@@ -497,7 +497,7 @@ public class Database {
      * @param hltv - hltv link
      * @return boolean - whether match exists or not
      */
-    public static boolean CheckMatchExist(String hltv){
+    public static boolean checkMatchExist(String hltv){
         Connection conn = null;
         Statement stmt = null;
         boolean result = true;
@@ -535,8 +535,74 @@ public class Database {
         return result;
     }
 
+    public static int addsubcomp(String subcomp){
+        Connection conn = null;
+        Statement stmt = null;
+        int result = 0;
+        try{
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            stmt = conn.createStatement();
+            String sql = "INSERT INTO Subcomp(name) VALUES (?)";
+            PreparedStatement prest;
+            prest = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            prest.setString(1, subcomp);
+            prest.executeUpdate();
+            ResultSet rs = prest.getGeneratedKeys();
+            if(rs.next())
+            {
+                result = rs.getInt(1);
+            }
 
 
+        }catch(SQLException se){
+            se.printStackTrace();
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            try{
+                if(stmt!=null)
+                    conn.close();
+            }catch(SQLException se){
+            }
+            try{
+                if(conn!=null)
+                    conn.close();
+            }catch(SQLException se){
+                se.printStackTrace();
+            }
+        }
+        return result;
+    }
+
+
+    public static void addcomplink(int cid, int subcid){
+        Connection conn = null;
+        Statement stmt = null;
+        try{
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            stmt = conn.createStatement();
+            String sql = "INSERT INTO Comp_belongs_to VALUES ("+subcid+", "+cid+")";
+            stmt.executeUpdate(sql);
+        }catch(SQLException se){
+            se.printStackTrace();
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            try{
+                if(stmt!=null)
+                    conn.close();
+            }catch(SQLException se){
+            }
+            try{
+                if(conn!=null)
+                    conn.close();
+            }catch(SQLException se){
+                se.printStackTrace();
+            }
+        }
+    }
 
 
     /*

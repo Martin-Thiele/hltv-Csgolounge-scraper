@@ -25,7 +25,6 @@ public class Main {
     static String userAgent = "useragent";
     static int i = 10; // Scraping timer in minutes
 
-    static int boe = 0; // Amount of best-of errors
     static int subcide = 0; // Amount of subcid errors
     static int teame = 0; // Amount of team errors
     static int updatecount;
@@ -41,10 +40,10 @@ public class Main {
 
 
 
-    public static void Getmatches() {
+    public static void getmatches() {
         updatecount = 0;
         matchcount = 0;
-        String gettime = GetNextTime();
+        String gettime = getNextTime();
 
         // Reset arraylists
         ArrayList<String> scrapedteam1 = new ArrayList<>();
@@ -106,8 +105,8 @@ public class Main {
 
             // Convert to teamids
             for(int s = 0; s < scrapedteam1.size(); s++){
-                int stid1 = SelectTid(scrapedteam1.get(s));
-                int stid2 = SelectTid(scrapedteam2.get(s));
+                int stid1 = selectTid(scrapedteam1.get(s));
+                int stid2 = selectTid(scrapedteam2.get(s));
                     scrapedtid1.add(stid1);
                     scrapedtid2.add(stid2);
             }
@@ -139,7 +138,7 @@ public class Main {
 
 
         // Update matches
-        incommatches = GetIncomplete(); // Get list of incomplete matches
+        incommatches = getIncomplete(); // Get list of incomplete matches
         System.out.println(incommatches.size()+" active matches");
         for (int j = 0; j < incommatches.size(); j++ ){
             scrapepage("Update", incommatches.get(j));
@@ -147,16 +146,15 @@ public class Main {
 
         // Add matches
         for (int i = 0; i < matchpages.size(); i++){
-        if (!CheckMatchExist(matchpages.get(i))) {
+        if (!checkMatchExist(matchpages.get(i))) {
             scrapepage("Insert", matchpages.get(i));}
         }
-        int counterrors = teame+boe+subcide;
+        int counterrors = teame+subcide;
         System.out.println("");
         System.out.println(matchcount+" new matches added");
         System.out.println(updatecount+" matches updated");
         System.out.println("Errors: " + counterrors);
         System.out.println("Team: "+ teame);
-        System.out.println("Best of errors: "+ boe);
         System.out.println("Competition errors: "+ subcide);
         System.out.println(gettime);
 
@@ -183,8 +181,8 @@ public class Main {
             }
             // Errorhandling for unknown team names and empty list
             if(scrapeteams.isEmpty()){scrapeteams.add("TBD");scrapeteams.add("TBD");}
-            if(SelectTid(scrapeteams.get(0)) == 0){scrapeteams.set(0, "TBD"); teame++;}
-            if(SelectTid(scrapeteams.get(1)) == 0){scrapeteams.set(1, "TBD"); teame++;}
+            if(selectTid(scrapeteams.get(0)) == 0){scrapeteams.set(0, "TBD"); teame++;}
+            if(selectTid(scrapeteams.get(1)) == 0){scrapeteams.set(1, "TBD"); teame++;}
 
             // Get date
             Elements sd  = matchpage.select("div[style=padding:5px;] span[style=font-size:14px;]");
@@ -198,9 +196,17 @@ public class Main {
             Elements comp = matchpage.select("div[style=padding:5px;] > div[style=text-align:center;font-size: 18px;");
             String competition = comp.text();
 
-            //Errorhandling for competition
-            if(SelectSubcid(competition) == 0)
-            {competition = "Filler"; subcide++;}
+
+            int subcid = selectSubcid(competition);
+            if(subcid == 0){
+                int checkcomp = frequentcomp(competition);
+                if(checkcomp == 0) {
+                    subcid = 71; // filler
+                }
+                else{
+                    subcid = checkcomp;
+                }
+            }
 
 
             // Get maps
@@ -237,10 +243,9 @@ public class Main {
             }
 
             // Get database variables
-            int tid1 = SelectTid(scrapeteams.get(0)); // Get team id instead of teamname
-            int tid2 = SelectTid(scrapeteams.get(1)); // ^
+            int tid1 = selectTid(scrapeteams.get(0)); // Get team id instead of teamname
+            int tid2 = selectTid(scrapeteams.get(1)); // ^
             stringdate = formatdate(stringdate); // Formatdate to proper database format
-            int subcid = SelectSubcid(competition); // Get sub comp id instead of name
             // Get odds
             int odds1 = 0;
             int odds2 = 0;
@@ -262,11 +267,11 @@ public class Main {
                 // Insert match
                 if (whatdo.equals("Insert")) {
                     for (int k = 0; k < bo; k++) {
-                        Insert(tid1,
+                        insert(tid1,
                                 tid2,
                                 stringdate,
                                 stringtime,
-                                SelectMapid(SelectMapname(scrapemaps.get(k))),
+                                selectMapid(selectMapname(scrapemaps.get(k))),
                                 subcid,
                                 csgllink,
                                 odds1,
@@ -279,7 +284,7 @@ public class Main {
                 }
                 // Update match
                 else {
-                    int mid = Selectmid(page);
+                    int mid = selectmid(page);
                     if (mid != 0) {
                         int t1wins = 0;
                         int t2wins = 0;
@@ -294,7 +299,7 @@ public class Main {
                                 score1 = Integer.parseInt(scrapescores.get(0));
                                 score2 = Integer.parseInt(scrapescores.get(1));
                             }
-                            int mapid = SelectMapid(SelectMapname(scrapemaps.get(k)));
+                            int mapid = selectMapid(selectMapname(scrapemaps.get(k)));
                             int complete = 0;
                             if((score1 > score2 && score1 > 14) || (score1 == 1 && score2 == 0 && mapid == 10 )){
                                 t1wins++;
@@ -306,7 +311,7 @@ public class Main {
                             }
                             if(bo == 3 && (t1wins == 2 || t2wins == 2)) {complete = 1;}
 
-                            Update(
+                            update(
                                     tid1,
                                     odds1,
                                     tid2,
@@ -364,7 +369,7 @@ public class Main {
     /** print next scrape time
      * @return String - time + 10 minutes
      */
-    public static String GetNextTime(){
+    public static String getNextTime(){
         DateFormat nextformat = new SimpleDateFormat("HH:mm:ss");
         Calendar next = Calendar.getInstance();
         next.add(Calendar.MINUTE, i);
@@ -388,23 +393,41 @@ public class Main {
         return result;
     }
 
-    public static String SelectMapname(String imgsrc){
+    public static String selectMapname(String imgsrc){
         String mapname = "TBA";
         switch (imgsrc){
-            case "http://static.hltv.org//images/hotmatch/default.png": mapname = "Unplayed"; break;
-            case "http://static.hltv.org//images/hotmatch/tba.png": mapname = "TBA"; break;
-            case "http://static.hltv.org//images/hotmatch/mirage.png": mapname = "de_mirage"; break;
-            case "http://static.hltv.org//images/hotmatch/cache.png": mapname = "de_cache"; break;
+        case "http://static.hltv.org//images/hotmatch/default.png":         mapname = "Unplayed"; break;
+            case "http://static.hltv.org//images/hotmatch/tba.png":         mapname = "TBA"; break;
+            case "http://static.hltv.org//images/hotmatch/mirage.png":      mapname = "de_mirage"; break;
+            case "http://static.hltv.org//images/hotmatch/cache.png":       mapname = "de_cache"; break;
             case "http://static.hltv.org//images/hotmatch/cobblestone.png": mapname = "de_cbble"; break;
-            case "http://static.hltv.org//images/hotmatch/dust2.png": mapname = "de_dust_2"; break;
-            case "http://static.hltv.org//images/hotmatch/nuke.png": mapname = "de_nuke"; break;
-            case "http://static.hltv.org//images/hotmatch/season.png": mapname = "de_season"; break;
-            case "http://static.hltv.org//images/hotmatch/inferno.png": mapname = "de_inferno"; break;
-            case "http://static.hltv.org//images/hotmatch/overpass.png": mapname = "de_overpass"; break;
-            case "http://static.hltv.org//images/hotmatch/train.png": mapname = "de_train"; break;
+            case "http://static.hltv.org//images/hotmatch/dust2.png":       mapname = "de_dust_2"; break;
+            case "http://static.hltv.org//images/hotmatch/nuke.png":        mapname = "de_nuke"; break;
+            case "http://static.hltv.org//images/hotmatch/season.png":      mapname = "de_season"; break;
+            case "http://static.hltv.org//images/hotmatch/inferno.png":     mapname = "de_inferno"; break;
+            case "http://static.hltv.org//images/hotmatch/overpass.png":    mapname = "de_overpass"; break;
+            case "http://static.hltv.org//images/hotmatch/train.png":       mapname = "de_train"; break;
         }
         return mapname;
     }
+
+
+    // Automatically add and link frequent competitions
+    public static int frequentcomp(String comp){
+        int tmp = 0;
+        if(comp.contains("QuickShot")){tmp = addsubcomp(comp); addcomplink(72, tmp);}
+        if(comp.contains("ESL")){      tmp = addsubcomp(comp); addcomplink(6,  tmp);}
+        if(comp.contains("ESL ESEA")){ tmp = addsubcomp(comp); addcomplink(45, tmp);}
+        if(comp.contains("FACEIT")){   tmp = addsubcomp(comp); addcomplink(11, tmp);}
+        if(comp.contains("CEVO")){     tmp = addsubcomp(comp); addcomplink(2,  tmp);}
+        if(comp.contains("DreamHack")){tmp = addsubcomp(comp); addcomplink(3,  tmp);}
+        if(comp.contains("ESWC")){     tmp = addsubcomp(comp); addcomplink(50, tmp);}
+        if(comp.contains("D!ngIT")){   tmp = addsubcomp(comp); addcomplink(40, tmp);}
+        return tmp;
+
+    }
+
+
 
 
     // Runner that runs the program
@@ -412,9 +435,8 @@ public class Main {
         public void run() {
             long start_time = System.currentTimeMillis();
             teame = 0; // Reset team errors
-            boe = 0; // Reset best-of errors
             subcide = 0; // Reset competition errors
-            Getmatches();
+            getmatches();
             long elapsed = 0;
             do {
                 elapsed =  600000 - (System.currentTimeMillis() - start_time) - 10000;
