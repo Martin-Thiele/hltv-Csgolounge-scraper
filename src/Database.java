@@ -9,7 +9,7 @@ import java.text.SimpleDateFormat;
 public class Database {
     // JDBC driver name and database URL
     static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-    static final String DB_URL = "jdbc:mysql:/<DATABASE_URL>?useServerPrepStmts=false&rewriteBatchedStatements=true";
+    static final String DB_URL = "jdbc:mysql://<DATABASE_URL>?useServerPrepStmts=false&rewriteBatchedStatements=true";
 
     // Database credentials
     static final String USER = "USER";

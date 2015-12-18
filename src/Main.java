@@ -196,12 +196,11 @@ public class Main {
             Elements comp = matchpage.select("div[style=padding:5px;] div[style=text-align:center;font-size: 18px;] a");
             String competition = comp.text();
 
-
             int subcid = selectSubcid(competition);
             if(subcid == 0){
                 int checkcomp = frequentcomp(competition);
                 if(checkcomp == 0) {
-                    subcid = 71; // filler
+                    subcid = 154; // filler
                 }
                 else{
                     subcid = checkcomp;
@@ -415,19 +414,27 @@ public class Main {
     // Automatically add and link frequent competitions
     public static int frequentcomp(String comp){
         int tmp = 0;
-        if(comp.contains("QuickShot")){tmp = addsubcomp(comp); addcomplink(72, tmp);}
-        if(comp.contains("ESL")){      tmp = addsubcomp(comp); addcomplink(6,  tmp);}
-        if(comp.contains("ESL ESEA")){ tmp = addsubcomp(comp); addcomplink(45, tmp);}
-        if(comp.contains("FACEIT")){   tmp = addsubcomp(comp); addcomplink(11, tmp);}
-        if(comp.contains("CEVO")){     tmp = addsubcomp(comp); addcomplink(2,  tmp);}
-        if(comp.contains("DreamHack")){tmp = addsubcomp(comp); addcomplink(3,  tmp);}
-        if(comp.contains("ESWC")){     tmp = addsubcomp(comp); addcomplink(50, tmp);}
-        if(comp.contains("D!ngIT")){   tmp = addsubcomp(comp); addcomplink(40, tmp);}
+        if(comp.contains("QuickShot")){        tmp = addsubcomp(comp); addcomplink(72, tmp);}
+        if(comp.contains("ESL")){              tmp = addsubcomp(comp); addcomplink(6,  tmp);}
+        if(comp.contains("ESL ESEA")){         tmp = addsubcomp(comp); addcomplink(45, tmp);}
+        if(comp.contains("FACEIT")){           tmp = addsubcomp(comp); addcomplink(11, tmp);}
+        if(comp.contains("CEVO")){             tmp = addsubcomp(comp); addcomplink(2,  tmp);}
+        if(comp.contains("DreamHack")){        tmp = addsubcomp(comp); addcomplink(3,  tmp);}
+        if(comp.contains("ESWC")){             tmp = addsubcomp(comp); addcomplink(50, tmp);}
+        if(comp.contains("D!ngIT")){           tmp = addsubcomp(comp); addcomplink(40, tmp);}
+        if(comp.contains("ASUS")){             tmp = addsubcomp(comp); addcomplink(9,  tmp);}
+        if(comp.contains("Fragbite")){         tmp = addsubcomp(comp); addcomplink(12, tmp);}
+        if(comp.contains("Gfinity")){          tmp = addsubcomp(comp); addcomplink(23, tmp);}
+        if(comp.contains("RGN")){              tmp = addsubcomp(comp); addcomplink(21, tmp);}
+        if(comp.contains("StarSeries")){       tmp = addsubcomp(comp); addcomplink(19, tmp);}
+        if(comp.contains("Uprise Champions")){ tmp = addsubcomp(comp); addcomplink(25, tmp);}
+        if(comp.contains("CS Select")){        tmp = addsubcomp(comp); addcomplink(30, tmp);}
+        if(comp.contains("99Damage")){         tmp = addsubcomp(comp); addcomplink(37, tmp);}
+        if(comp.contains("Alientech")){        tmp = addsubcomp(comp); addcomplink(83, tmp);}
+
         return tmp;
 
     }
-
-
 
 
     // Runner that runs the program
