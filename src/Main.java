@@ -20,6 +20,10 @@ import java.util.Scanner;
 
 import static csgoscraper.Database.*;
 
+/**
+* @author Martin "Shrewbi" Thiele
+* @since  16-12-2015
+*/
 public class Main {
     // Scraping settings
     static String userAgent = "useragent";
@@ -31,37 +35,34 @@ public class Main {
     static int matchcount;
     static ArrayList<Integer> scrapedodds1 = new ArrayList<>();
     static ArrayList<Integer> scrapedodds2 = new ArrayList<>();
-    static ArrayList<String> scrapedlinks = new ArrayList<>();
-    static ArrayList<Integer> scrapedtid1 = new ArrayList<>();
-    static ArrayList<Integer> scrapedtid2 = new ArrayList<>();
+    static ArrayList<String>  scrapedlinks = new ArrayList<>();
+    static ArrayList<Integer> scrapedtid1  = new ArrayList<>();
+    static ArrayList<Integer> scrapedtid2  = new ArrayList<>();
     static int sz;
 
     // Scrape for matches then insert or update
-
-
-
     public static void getmatches() {
         updatecount = 0;
         matchcount = 0;
         String gettime = getNextTime();
 
-        // Reset arraylists
+        // Reset variables
         ArrayList<String> scrapedteam1 = new ArrayList<>();
         ArrayList<String> scrapedteam2 = new ArrayList<>();
-        ArrayList<String> matchpages = new ArrayList<>();
+        ArrayList<String> matchpages   = new ArrayList<>();
         ArrayList<String> incommatches = new ArrayList<>();
         scrapedodds1 = new ArrayList<>();
         scrapedodds2 = new ArrayList<>();
-        scrapedtid1 = new ArrayList<>();
-        scrapedtid2 = new ArrayList<>();
+        scrapedtid1  = new ArrayList<>();
+        scrapedtid2  = new ArrayList<>();
         scrapedlinks = new ArrayList<>();
-        //Hltv scraper
 
+
+        //Hltv scraper
         try {
 
             // Connect to scrape page
             Document doc = Jsoup.connect("http://www.hltv.org/?pageid=305").userAgent(userAgent).get();
-
             // Scrape for links in div.center and add to arraylist
             Elements links = doc.select("div.center a");
             for (Element link : links) {
@@ -75,13 +76,10 @@ public class Main {
         }
 
 
-
         //csgolounge scraper
-
         try {
             // Connect to scrape page
             Document doc = Jsoup.connect("http://www.csgolounge.com").userAgent(userAgent).get();
-
             // Scrape matchlinks
             Elements links = doc.select("div.match a[href]");
             for (Element link : links) {
@@ -90,7 +88,7 @@ public class Main {
                 else {
                     scrapedlinks.add(scraped);
                 }
-                }
+            }
 
 
             // Scrape teams
@@ -107,8 +105,8 @@ public class Main {
             for(int s = 0; s < scrapedteam1.size(); s++){
                 int stid1 = selectTid(scrapedteam1.get(s));
                 int stid2 = selectTid(scrapedteam2.get(s));
-                    scrapedtid1.add(stid1);
-                    scrapedtid2.add(stid2);
+                scrapedtid1.add(stid1);
+                scrapedtid2.add(stid2);
             }
             sz = scrapedtid1.size();
 
@@ -118,15 +116,15 @@ public class Main {
             count = 0;
             for (Element odd : odds) {
                 String scraped = odd.text();
-                String scrapeodds = "0";
+                String scrapeodds;
                 count++;
                 switch (scraped.length()) {
-                    case 2: scrapeodds = scraped.substring(0,1); break;
-                    case 3: scrapeodds = scraped.substring(0,2); break;
-                    case 4: scrapeodds = scraped.substring(0,3); break;
+                    case 2:  scrapeodds = scraped.substring(0,1); break;
+                    case 3:  scrapeodds = scraped.substring(0,2); break;
+                    case 4:  scrapeodds = scraped.substring(0,3); break;
                     default: scrapeodds = "0";
                 }
-                if(count % 2 != 0) {scrapedodds1.add(Integer.parseInt(scrapeodds));}
+                if(count % 2 != 0){scrapedodds1.add(Integer.parseInt(scrapeodds));}
                 else{scrapedodds2.add(Integer.parseInt(scrapeodds));}
             }
         }
@@ -149,12 +147,9 @@ public class Main {
         if (!checkMatchExist(matchpages.get(i))) {
             scrapepage("Insert", matchpages.get(i));}
         }
-        int counterrors = teame+subcide;
-        System.out.println("");
         System.out.println(matchcount+" new matches added");
         System.out.println(updatecount+" matches updated");
-        System.out.println("Errors: " + counterrors);
-        System.out.println("Team: "+ teame);
+        System.out.println("Team errors: "+ teame);
         System.out.println("Competition errors: "+ subcide);
         System.out.println(gettime);
 
@@ -166,9 +161,9 @@ public class Main {
      * @param page   - hltv matchpage
      */
     public static void scrapepage(String whatdo, String page){
-        ArrayList<String> scrapeteams= new ArrayList<>();
-        ArrayList<String> scrapemaps= new ArrayList<>();
-        ArrayList<String> scrapescores= new ArrayList<>();
+        ArrayList<String> scrapeteams  = new ArrayList<>();
+        ArrayList<String> scrapemaps   = new ArrayList<>();
+        ArrayList<String> scrapescores = new ArrayList<>();
         String stringdate;
         String stringtime;
         try {
@@ -196,17 +191,17 @@ public class Main {
             Elements comp = matchpage.select("div[style=padding:5px;] div[style=text-align:center;font-size: 18px;] a");
             String competition = comp.text();
 
+            // Convert and check competition
             int subcid = selectSubcid(competition);
             if(subcid == 0){
-                int checkcomp = frequentcomp(competition);
+                int checkcomp = frequentcomp(competition); // Check if competition includes name from frequent competition hosts
                 if(checkcomp == 0) {
-                    subcid = 154; // filler
+                    subcid = 154; // filler subcompetition id
                 }
                 else{
                     subcid = checkcomp;
                 }
             }
-
 
             // Get maps
             Elements maps = matchpage.select("div[style=border: 1px" +
@@ -219,7 +214,8 @@ public class Main {
                 scrapemaps.add(map.absUrl("src"));
             }
 
-            int bo = 0;
+            // Get best-of scenario
+            int bo;
             bo = scrapemaps.size();
 
             // Get scores
@@ -242,27 +238,28 @@ public class Main {
             }
 
             // Get database variables
-            int tid1 = selectTid(scrapeteams.get(0)); // Get team id instead of teamname
+            int tid1 = selectTid(scrapeteams.get(0)); // convert teamid to teamname
             int tid2 = selectTid(scrapeteams.get(1)); // ^
-            stringdate = formatdate(stringdate); // Formatdate to proper database format
+            stringdate = formatdate(stringdate);      // Formatdate to proper database format
+
             // Get odds
             int odds1 = 0;
             int odds2 = 0;
             String csgllink = null;
-            for(int k = 0; k < sz; k++){
-                if(tid1 == scrapedtid1.get(k) && tid2 == scrapedtid2.get(k)){
+            for(int k = 0; k < sz; k++){  // Match given csgl team id with database team ids
+                if(tid1 == scrapedtid1.get(k) && tid2 == scrapedtid2.get(k)){        // If team 1 = team 1
                     odds1 = scrapedodds1.get(k);
                     odds2 = scrapedodds2.get(k);
                     csgllink = "http://csgolounge.com/".concat(scrapedlinks.get(k));
                 }
-                else if(tid2 == scrapedtid1.get(k) && tid1 == scrapedtid2.get(k)) {
+                else if(tid2 == scrapedtid1.get(k) && tid1 == scrapedtid2.get(k)) {  // If team 2 = team 1
                     odds2 = scrapedodds1.get(k);
                     odds1 = scrapedodds2.get(k);
                     csgllink = "http://csgolounge.com/".concat(scrapedlinks.get(k));
                 }
 
             }
-            if(bo != 0 && bo > 0 && bo < 8) {
+            if(bo > 0) {
                 // Insert match
                 if (whatdo.equals("Insert")) {
                     for (int k = 0; k < bo; k++) {
@@ -285,8 +282,6 @@ public class Main {
                 else {
                     int mid = selectmid(page);
                     if (mid != 0) {
-                        int t1wins = 0;
-                        int t2wins = 0;
                         for (int k = 0; k < bo; k++) {
                             int score1;
                             int score2;
@@ -300,15 +295,19 @@ public class Main {
                             }
                             int mapid = selectMapid(selectMapname(scrapemaps.get(k)));
                             int complete = 0;
-                            if((score1 > score2 && score1 > 14) || (score1 == 1 && score2 == 0 && mapid == 10 )){
+                            // Mark matches complete - handling
+                            int t1wins = 0; 
+                            int t2wins = 0;
+                            if((score1 > score2 && score1 > 14) || (score1 == 1 && score2 == 0 && mapid == 10 )){ // mapid 10 = unplayed
                                 t1wins++;
                                 complete = 1;
                             }
-                            if((score2 > score1 && score2 > 14) || (score1 == 2 && score2 == 1 && mapid == 10)){
+                            if((score2 > score1 && score2 > 14) || (score1 == 0 && score2 == 1 && mapid == 10)){
                                 t2wins++;
                                 complete = 1;
                             }
-                            if(bo == 3 && (t1wins == 2 || t2wins == 2)) {complete = 1;}
+                            if(bo == 3 && (t1wins >= 2 || t2wins >= 2)) {complete = 1;} // if a team has won 2 maps, mark all maps complete
+                            if(bo == 5 && (t1wins >= 3 || t2wins >= 3)) {complete = 1;} // if a team has won 3 maps, mark all maps complete
 
                             update(
                                     tid1,
@@ -331,7 +330,7 @@ public class Main {
                         System.out.println("Updated: " + scrapeteams.get(0) + " vs " + scrapeteams.get(1));
                         updatecount++;
                     }
-                    else{System.out.println("MID ERROR");}
+                    else{System.out.println("MID ERROR");} // Something bad happened
                 }
 
             }
@@ -366,7 +365,7 @@ public class Main {
     }
 
     /** print next scrape time
-     * @return String - time + 10 minutes
+     * @return String - time + i minutes
      */
     public static String getNextTime(){
         DateFormat nextformat = new SimpleDateFormat("HH:mm:ss");
@@ -411,10 +410,13 @@ public class Main {
     }
 
 
-    // Automatically add and link frequent competitions
+    /** Automatically add and link frequent competitions
+    *   first addsubcomp and store the subcid in tmp.
+    *   then link the two in a belongs_to table with competiton id and the tmp subcompetition id
+    */
     public static int frequentcomp(String comp){
         int tmp = 0;
-        if(comp.contains("QuickShot")){        tmp = addsubcomp(comp); addcomplink(72, tmp);}
+        if(comp.contains("QuickShot")){        tmp = addsubcomp(comp); addcomplink(72, tmp);} 
         if(comp.contains("ESL")){              tmp = addsubcomp(comp); addcomplink(6,  tmp);}
         if(comp.contains("ESL ESEA")){         tmp = addsubcomp(comp); addcomplink(45, tmp);}
         if(comp.contains("FACEIT")){           tmp = addsubcomp(comp); addcomplink(11, tmp);}
@@ -431,7 +433,6 @@ public class Main {
         if(comp.contains("CS Select")){        tmp = addsubcomp(comp); addcomplink(30, tmp);}
         if(comp.contains("99Damage")){         tmp = addsubcomp(comp); addcomplink(37, tmp);}
         if(comp.contains("Alientech")){        tmp = addsubcomp(comp); addcomplink(83, tmp);}
-
         return tmp;
 
     }
@@ -441,12 +442,14 @@ public class Main {
     public static Runnable runner = new Runnable() {
         public void run() {
             long start_time = System.currentTimeMillis();
-            teame = 0; // Reset team errors
+            teame   = 0; // Reset team errors
             subcide = 0; // Reset competition errors
             getmatches();
+
+            // Start commands
             long elapsed = 0;
             do {
-                elapsed =  600000 - (System.currentTimeMillis() - start_time) - 10000;
+                elapsed =  i * 60000 - (System.currentTimeMillis() - start_time) - 5000; // Run for i minutes - 5 seconds, then lock commands
                 System.out.print("Enter command:");
                     ExecutorService executor = Executors.newSingleThreadExecutor();
                     Future<String> future = executor.submit(new Task());

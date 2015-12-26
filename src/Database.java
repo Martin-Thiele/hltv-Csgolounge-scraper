@@ -6,6 +6,12 @@ import java.util.Calendar;
 import java.util.Scanner;
 import java.text.SimpleDateFormat;
 
+import static csgoscraper.Main.*;
+
+/**
+* @author Martin "Shrewbi" Thiele
+* @since  16-12-2015
+*/
 public class Database {
     // JDBC driver name and database URL
     static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
@@ -152,7 +158,7 @@ public class Database {
                 }
             }
         }
-        else if (odds1 != 0 && odds2 != 0 && csgllink != null) {
+        else if (odds1 != 0 && odds2 != 0 && csgllink != null && subcid != 154) {
             Connection conn = null;
             Statement stmt = null;
             try {
@@ -163,7 +169,8 @@ public class Database {
 
                 //Start query
                 PreparedStatement update = conn.prepareStatement
-                        ("UPDATE Matches SET tid_1 = ?, tid_2 = ?, match_date = ?, time = ?, mapid = ?,  score_1 = ?,  score_2 = ?,  subcid = ?, csglodds1 = ?, csglodds2 = ?, csgl = ?, complete = ? WHERE mid = ?");
+                     ("UPDATE Matches SET tid_1 = ?, tid_2 = ?, match_date = ?, time = ?, mapid = ?,  score_1 = ?," +
+                      "score_2 = ?,  subcid = ?, csglodds1 = ?, csglodds2 = ?, csgl = ?, complete = ? WHERE mid = ?");
 
                 update.setInt(1, team_1);
                 update.setInt(2, team_2);
@@ -248,11 +255,6 @@ public class Database {
         else{System.out.println("Unknown update: tbd:" +tbdcheck+ "odds: " +odds1+ ", " +odds2+ ", link: "+csgllink);}
 
     }
-
-    /**
-     *
-     * @return ArrayList - List of hltv links
-     */
 
     /*
 
@@ -343,6 +345,11 @@ public class Database {
         return subcid;
     }
 
+
+    /** Converts a hltv link to match id
+     * @param hltv - hltv link
+     * @return int - match id
+     */
     public static int selectmid(String hltv){
         Connection conn = null;
         Statement stmt = null;
@@ -534,11 +541,14 @@ public class Database {
         }
         return result;
     }
-
+    /** add a subcompetition to the database
+     * @param subcomp - name of subcomp
+     * @return int - the returned subcompetition id
+     */
     public static int addsubcomp(String subcomp){
         Connection conn = null;
         Statement stmt = null;
-        int result = 0;
+        int subcid = 0;
         try{
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -551,7 +561,7 @@ public class Database {
             ResultSet rs = prest.getGeneratedKeys();
             if(rs.next())
             {
-                result = rs.getInt(1);
+                subcid = rs.getInt(1);
             }
 
 
@@ -572,10 +582,14 @@ public class Database {
                 se.printStackTrace();
             }
         }
-        return result;
+        return subcid;
     }
 
-
+    /** link a subcompetition to its
+     * respective competition in the Comp_belongs_to table
+     * @param cid - competition id
+     * @param subcid - Subcompetition id
+     */
     public static void addcomplink(int cid, int subcid){
         Connection conn = null;
         Statement stmt = null;
@@ -606,14 +620,10 @@ public class Database {
 
 
     /*
-
         USER COMMANDS
-
      */
 
-
-
-    // Delete match ids
+    // Delete match ids, seperated by ","
     public static void delete(){
         Connection conn = null;
         Statement stmt = null;
@@ -662,7 +672,6 @@ public class Database {
         System.out.println("matches has been deleted");
     }
 
-
     // Deletes matches if complete = 0 and date is less than 3 days of today
     public static void deleteinactive(){
         Connection conn = null;
@@ -702,6 +711,8 @@ public class Database {
         }
         System.out.println("inactive matches has been deleted");
     }
+
+    // Delete playertransfers in case of mistakes, seperated by ","
     public static void deletetransfer(){
         Connection conn = null;
         Statement stmt = null;
@@ -751,8 +762,7 @@ public class Database {
     }
 
 
-
-    // Marks all teams inactive if no matches for 90 days
+    // Marks teams inactive if no matches for 90 days
     public static void markinactive(){
         Connection conn = null;
         Statement stmt = null;
@@ -791,6 +801,21 @@ public class Database {
         }
         System.out.println("Teams have been marked inactive");
     }
+
+    public static void addmatches() {
+
+        System.out.println("Enter hltv links");
+        Scanner scanner = new Scanner(System.in);
+        String line = scanner.nextLine();
+
+
+        String[] values = line.split(", ");
+        for(String s: values) {
+            scrapepage("Insert", s);
+        }
+        System.out.println("Matches has been added");
+    }
+
 
 
 
