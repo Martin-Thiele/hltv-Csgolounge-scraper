@@ -280,6 +280,9 @@ public class Main {
                 }
                 // Update match
                 else {
+                    // Mark matches complete - handling
+                    int t1wins = 0; 
+                    int t2wins = 0;
                     int mid = selectmid(page);
                     if (mid != 0) {
                         for (int k = 0; k < bo; k++) {
@@ -295,9 +298,6 @@ public class Main {
                             }
                             int mapid = selectMapid(selectMapname(scrapemaps.get(k)));
                             int complete = 0;
-                            // Mark matches complete - handling
-                            int t1wins = 0; 
-                            int t2wins = 0;
                             if((score1 > score2 && score1 > 14) || (score1 == 1 && score2 == 0 && mapid == 10 )){ // mapid 10 = unplayed
                                 t1wins++;
                                 complete = 1;
