@@ -270,9 +270,7 @@ public class Database {
     }
 
     /*
-
         HELPER FUNCTIONS
-
      */
 
     /** Gives a list of incomplete matches

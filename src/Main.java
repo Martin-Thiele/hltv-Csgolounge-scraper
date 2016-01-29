@@ -438,41 +438,9 @@ public class Main {
     // Runner that runs the program
     public static Runnable runner = new Runnable() {
         public void run() {
-            long start_time = System.currentTimeMillis();
             teame   = 0; // Reset team errors
             subcide = 0; // Reset competition errors
             getmatches();
-
-            // Start commands
-            long elapsed = 0;
-            do {
-                elapsed =  i * 60000 - (System.currentTimeMillis() - start_time) - 5000; // Run for i minutes - 5 seconds, then lock commands
-                System.out.print("Enter command:");
-                    ExecutorService executor = Executors.newSingleThreadExecutor();
-                    Future<String> future = executor.submit(new Task());
-                    try {
-                        future.get(elapsed, TimeUnit.MILLISECONDS);
-                        future.cancel(true);
-                        executor.shutdownNow();
-                    } catch (TimeoutException e) {
-                        future.cancel(true);
-                        executor.shutdownNow();
-                        System.out.print(" Locked\n");
-                        break;
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        future.cancel(true);
-                        break;
-                    } catch (ExecutionException e) {
-                        e.printStackTrace();
-                        future.cancel(true);
-                        break;
-                    }
-                    executor.shutdownNow();
-                    future.cancel(true);
-            }
-            while(elapsed > 5000);
-
         }
     };
     public static void main(String[] args) {
