@@ -16,8 +16,9 @@ class Task implements Callable<String> {
         commands[0] = "delete............Deletes match by id";
         commands[1] = "delall............Delete all inactive matches";
         commands[2] = "deltransfer.......Deletes transfer by id";
-        commands[3] = "markinactive......Marks teams inactive, if no matches in 90 days";
-        commands[4] = "addmatches........Marks teams inactive, if no matches in 90 days";
+        commands[3] = "addmatches........Add matches to database taking hltv links";
+        commands[4] = "moveplayers.......Move players from a team to another";
+        commands[5] = "markcomplete......Mark matches complete";
         Scanner scanner = new Scanner(System.in);
         String command = scanner.nextLine();
         command = command.toLowerCase();
@@ -43,11 +44,14 @@ class Task implements Callable<String> {
                 }
                 System.out.println("\n");
                 break;
-            case "markinactive":
-                markinactive();
-                break;
             case "addmatches":
                 addmatches();
+                break;
+            case "moveplayers":
+                moveplayers();
+                break;
+            case "markcomplete":
+                markcomplete();
                 break;
             default:
                 System.out.println("No such command"); break;

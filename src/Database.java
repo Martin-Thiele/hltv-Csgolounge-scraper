@@ -26,16 +26,16 @@ public class Database {
      * @param team_2 - Team id 2
      * @param date   - Formatted date
      * @param time   - Start time
-     * @param mapid  - Map
      * @param subcid - Subcompetition id
      * @param hltv   - hltv link
      */
-    public static void insert(int team_1, int team_2, String date, String time, int mapid, int subcid, String csgllink, int odds1, int odds2, String hltv){
+    public static void insert(int team_1, int team_2, int[] score_1, int[] score_2, int[] mapid, String date, String time, int subcid, String csgllink, int odds1, int odds2, String hltv){
 
         if (team_1 == 0) {team_1 = 108;} // Error handling and change to team "TBD"
         if (team_2 == 0) {team_2 = 108;} // ^
         Connection conn = null;
         Statement stmt = null;
+        int mid = 0;
         try{
             Class.forName("com.mysql.jdbc.Driver");
 
@@ -43,28 +43,34 @@ public class Database {
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
 
             //Start query
-            PreparedStatement insert = conn.prepareStatement
-                    ("INSERT INTO Matches"
-                            + "(tid_1, tid_2, match_date, time, mapid, score_1, score_2, subcid, complete, csglodds1, csglodds2, csgl, hltv) VALUES"
-                            + "(?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            stmt = conn.createStatement();
+            String sql = "INSERT INTO Matches2"
+                       + "(tid_1, tid_2, match_date, match_time, subcid, complete, csglodds1, csglodds2, csgl, hltv) VALUES"
+                       + "(?,?,?,?,?,?,?,?,?,?)";
+            PreparedStatement prest;
+            prest = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 
-            insert.setInt(1, team_1);
-            insert.setInt(2, team_2);
-            insert.setString(3, date);
-            insert.setString(4, time);
-            insert.setInt(5, mapid);
-            insert.setInt(6, 0);
-            insert.setInt(7, 0);
-            insert.setInt(8, subcid);
-            insert.setInt(9, 0);
-            insert.setInt(10, odds1);
-            insert.setInt(11, odds2);
+            prest.setInt(1, team_1);
+            prest.setInt(2, team_2);
+            prest.setString(3, date);
+            prest.setString(4, time);
+            prest.setInt(5, subcid);
+            prest.setInt(6, 0);
+            prest.setInt(7, odds1);
+            prest.setInt(8, odds2);
             if(csgllink == null) {
-                insert.setNull(12, Types.VARCHAR);
+                prest.setNull(9, Types.VARCHAR);
             }
-            else{insert.setString(12, csgllink);}
-            insert.setString(13, hltv);
-            insert.executeUpdate(); // Run query
+            else{prest.setString(9, csgllink);}
+            prest.setString(10, hltv);
+            prest.executeUpdate(); // Run query
+            ResultSet rs = prest.getGeneratedKeys();
+
+            if(rs.next())
+            {
+                mid = rs.getInt(1);
+            }
+
         }catch(SQLException se){
             //Handle errors for JDBC
             se.printStackTrace();
@@ -85,6 +91,7 @@ public class Database {
                 se.printStackTrace();
             }
         }
+        updatemaps("insert", mid, score_1, score_2, mapid);
     }
 
     /** Update db.Matches on hltv link
@@ -92,13 +99,10 @@ public class Database {
      * @param team_2  - Team id 2
      * @param date    - Formatted date
      * @param time    - Start time
-     * @param mapid   - Map
-     * @param score_1 - Score for team 1
-     * @param score_2 - Score for team 2
      * @param subcid  - Subcompetition id
      * @param mid     - Matchid
      */
-    public static void update(int team_1, int odds1, int team_2, int odds2, String date, String time, int mapid, int score_1, int score_2, int subcid, String csgllink, int mid, int complete) {
+    public static void update(int team_1, int odds1, int team_2, int[] score_1, int[] score_2, int[] mapid, int odds2, String date, String time, int subcid, String csgllink, int mid) {
         if (team_1 == 0) {
             team_1 = 108;
         } // Error handling and change to team "TBD"
@@ -110,7 +114,25 @@ public class Database {
         if(team_1 == 108 && team_2 == 108){
             tbdcheck = 1;
         }
-
+        int t1win = 0;
+        int t2win = 0;
+        int complete = 0;
+        for(int i = 0; i < mapid.length; i++){
+            if(score_1[i] > score_2[i] && (score_1[i] > 15 || mapid[i] == 10)){t1win++;}
+            if(score_1[i] < score_2[i] && (score_2[i] > 15 || mapid[i] == 10)){t2win++;}
+        }
+        if(mapid.length == 1){
+            if(t1win+t2win == 1)        {complete = 1;}
+        }
+        if(mapid.length == 2){
+            if(t1win+t2win == 2)        {complete = 1;}
+        }
+        if(mapid.length == 3){
+            if(t1win == 2 || t2win == 2){complete = 1;}
+        }
+        if(mapid.length == 5){
+            if(t1win == 3 || t2win == 3){complete = 1;}
+        }
 
         if(tbdcheck == 1) {
             Connection conn = null;
@@ -123,19 +145,16 @@ public class Database {
 
                 //Start query
                 PreparedStatement update = conn.prepareStatement
-                        ("UPDATE Matches SET match_date = ?, time = ?, mapid = ?,  score_1 = ?,  score_2 = ?,  subcid = ?, complete = ?, csglodds1 = ?, csglodds2 = ?, csgl = ? WHERE mid = ?");
+                        ("UPDATE Matches2 SET match_date = ?, match_time = ?, subcid = ?, complete = ?, csglodds1 = ?, csglodds2 = ?, csgl = ? WHERE mid = ?");
 
                 update.setString(1, date);
                 update.setString(2, time);
-                update.setInt(3, mapid);
-                update.setInt(4, score_1);
-                update.setInt(5, score_2);
-                update.setInt(6, subcid);
-                update.setInt(7, 0);
-                update.setInt(8, 0);
-                update.setInt(9, 0);
-                update.setNull(10, Types.INTEGER);
-                update.setInt(11, mid);
+                update.setInt(3, subcid);
+                update.setInt(4, 0);
+                update.setInt(5, 0);
+                update.setInt(6, 0);
+                update.setNull(7, Types.INTEGER);
+                update.setInt(8, mid);
                 update.executeUpdate(); // Run query
             } catch (SQLException se) {
                 //Handle errors for JDBC
@@ -169,22 +188,19 @@ public class Database {
 
                 //Start query
                 PreparedStatement update = conn.prepareStatement
-                     ("UPDATE Matches SET tid_1 = ?, tid_2 = ?, match_date = ?, time = ?, mapid = ?,  score_1 = ?," +
-                      "score_2 = ?,  subcid = ?, csglodds1 = ?, csglodds2 = ?, csgl = ?, complete = ? WHERE mid = ?");
+                     ("UPDATE Matches2 SET tid_1 = ?, tid_2 = ?, match_date = ?, match_time = ?, " +
+                      "subcid = ?, csglodds1 = ?, csglodds2 = ?, csgl = ?, complete = ? WHERE mid = ?");
 
                 update.setInt(1, team_1);
                 update.setInt(2, team_2);
                 update.setString(3, date);
                 update.setString(4, time);
-                update.setInt(5, mapid);
-                update.setInt(6, score_1);
-                update.setInt(7, score_2);
-                update.setInt(8, subcid);
-                update.setInt(9, odds1);
-                update.setInt(10, odds2);
-                update.setString(11, csgllink);
-                update.setInt(12, complete);
-                update.setInt(13, mid);
+                update.setInt(5, subcid);
+                update.setInt(6, odds1);
+                update.setInt(7, odds2);
+                update.setString(8, csgllink);
+                update.setInt(9, complete);
+                update.setInt(10, mid);
                 update.executeUpdate(); // Run query
             } catch (SQLException se) {
                 //Handle errors for JDBC
@@ -219,17 +235,14 @@ public class Database {
 
                 //Start query
                 PreparedStatement update = conn.prepareStatement
-                        ("UPDATE Matches SET tid_1 = ?, tid_2 = ?, match_date = ?, time = ?, mapid = ?,  score_1 = ?,  score_2 = ?,  subcid = ? WHERE mid = ?");
+                        ("UPDATE Matches2 SET tid_1 = ?, tid_2 = ?, match_date = ?, match_time = ?,  subcid = ? WHERE mid = ?");
 
                 update.setInt(1, team_1);
                 update.setInt(2, team_2);
                 update.setString(3, date);
                 update.setString(4, time);
-                update.setInt(5, mapid);
-                update.setInt(6, score_1);
-                update.setInt(7, score_2);
-                update.setInt(8, subcid);
-                update.setInt(9, mid);
+                update.setInt(5, subcid);
+                update.setInt(6, mid);
                 update.executeUpdate(); // Run query
             } catch (SQLException se) {
                 //Handle errors for JDBC
@@ -252,8 +265,8 @@ public class Database {
                 }
             }
         }
-        else{System.out.println("Unknown update: tbd:" +tbdcheck+ "odds: " +odds1+ ", " +odds2+ ", link: "+csgllink);}
-
+        else{System.out.println("wrong odds: "+csgllink+ " ("+odds1+"% - "+odds2+"%)");}
+        updatemaps("update", mid, score_1, score_2, mapid);
     }
 
     /*
@@ -274,8 +287,7 @@ public class Database {
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
             stmt = conn.createStatement();
 
-            String sql = "SELECT * FROM(select tid_1, tid_2, time, match_date, mid, hltv from Matches WHERE complete = 0 AND hltv != '' ORDER BY mid asc) AS T " +
-                    "GROUP BY tid_1, tid_2, time, match_date, hltv ORDER BY mid asc";
+            String sql = "SELECT * FROM Matches2 WHERE complete = 0 AND hltv != '' ORDER BY mid asc";
             ResultSet rs = stmt.executeQuery(sql);
             while(rs.next()){
                 incommatches.add(rs.getString("hltv"));
@@ -358,7 +370,7 @@ public class Database {
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
             stmt = conn.createStatement();
-            String sql = "SELECT mid FROM Matches WHERE hltv ='"+hltv+"' ORDER BY mid asc LIMIT 1";
+            String sql = "SELECT mid FROM Matches2 WHERE hltv ='"+hltv+"' LIMIT 1";
             ResultSet rs = stmt.executeQuery(sql);
             while(rs.next()){
                 mid = rs.getInt("mid");
@@ -442,7 +454,7 @@ public class Database {
             ResultSet rs = stmt.executeQuery(sql);
             while(rs.next()){
                 tid = rs.getInt("tid");
-                active = rs.getInt("tid");
+                active = rs.getInt("active");
             }
             rs.close();
         }catch(SQLException se){
@@ -467,6 +479,8 @@ public class Database {
         }
         return tid;
     }
+
+
 
     // Marks a team active
     public static void markteamactive(int id){
@@ -498,6 +512,37 @@ public class Database {
             }
         }
     }
+    // Marks a team inactive
+    public static void markteaminactive(int id){
+        Connection conn = null;
+        Statement stmt = null;
+
+        String sql = "Update Teams SET active = 0 WHERE tid = "+id+" ";
+        try{
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            stmt = conn.createStatement();
+            stmt.executeUpdate(sql);
+        }catch(SQLException se){
+            se.printStackTrace();
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            try{
+                if(stmt!=null)
+                    conn.close();
+            }catch(SQLException se){
+                System.out.println("Something happened: markteaminactive ");
+            }
+            try{
+                if(conn!=null)
+                    conn.close();
+            }catch(SQLException se){
+                se.printStackTrace();
+            }
+        }
+    }
+
 
 
     /** Checks if match already exists in database
@@ -513,7 +558,7 @@ public class Database {
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
             stmt = conn.createStatement();
-            String sql = "SELECT COUNT(*) AS Count FROM Matches WHERE hltv = '"+hltv+"' LIMIT 1";
+            String sql = "SELECT COUNT(*) AS Count FROM Matches2 WHERE hltv = '"+hltv+"' LIMIT 1";
             ResultSet rs = stmt.executeQuery(sql);
             while(rs.next()){
                 check = rs.getInt("Count");
@@ -618,12 +663,151 @@ public class Database {
         }
     }
 
+    public static void updatemaps(String whatdo, int mid, int[] score_1, int[] score_2, int[] mapid){
+        if(whatdo.equals("update")) {
+            Connection conn = null;
+            Statement stmt = null;
+            ArrayList<Integer> pmapid = new ArrayList<>();
+            try{
+                Class.forName("com.mysql.jdbc.Driver");
+                conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                stmt = conn.createStatement();
+                String sql = "SELECT pmapid FROM Map_belongs_to WHERE mid = "+mid+"";
+                ResultSet rs = stmt.executeQuery(sql);
+                while(rs.next()){
+                    pmapid.add(rs.getInt("pmapid"));
+                }
+                rs.close();
+            }catch(SQLException se){
+                se.printStackTrace();
+            }catch(Exception e){
+                e.printStackTrace();
+            }finally{
+                try{
+                    if(stmt!=null)
+                        conn.close();
+                }catch(SQLException se){
+                }
+                try{
+                    if(conn!=null)
+                        conn.close();
+                }catch(SQLException se){
+                    se.printStackTrace();
+                }
+            }
+            for (int i = 0; i < pmapid.size(); i++) {
+                try {
+                    Class.forName("com.mysql.jdbc.Driver");
+                    conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                    stmt = conn.createStatement();
+                    PreparedStatement update = conn.prepareStatement
+                            ("UPDATE Playedmaps SET mapid = ?, score_1 = ?, score_2 = ? WHERE pmapid = ?");
+
+                    update.setInt(1, mapid[i]);
+                    update.setInt(2, score_1[i]);
+                    update.setInt(3, score_2[i]);
+                    update.setInt(4, pmapid.get(i));
+                    update.executeUpdate(); // Run query
+
+                } catch (SQLException se) {
+                    se.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    try {
+                        if (stmt != null)
+                            conn.close();
+                    } catch (SQLException se) {
+                    }
+                    try {
+                        if (conn != null)
+                            conn.close();
+                    } catch (SQLException se) {
+                        se.printStackTrace();
+                    }
+                }
+            }
+        }
+        else{
+            ArrayList<Integer> pmapid = new ArrayList<>();
+            for(int i = 0; i < mapid.length; i++) {
+                    Connection conn = null;
+                    Statement stmt = null;
+                    try {
+                        Class.forName("com.mysql.jdbc.Driver");
+                        conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                        stmt = conn.createStatement();
+                        String sql = "INSERT INTO Playedmaps(mapid, score_1, score_2) VALUES( ?, ?, ?)";
+                        PreparedStatement prest;
+                        prest = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                        prest.setInt(1, mapid[i]);
+                        prest.setInt(2, score_1[i]);
+                        prest.setInt(3, score_2[i]);
+                        prest.executeUpdate();
+                        ResultSet rs = prest.getGeneratedKeys();
+                        if(rs.next())
+                        {
+                            pmapid.add(rs.getInt(1));
+                        }
+
+                    } catch (SQLException se) {
+                        se.printStackTrace();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        try {
+                            if (stmt != null)
+                                conn.close();
+                        } catch (SQLException se) {
+                        }
+                        try {
+                            if (conn != null)
+                                conn.close();
+                        } catch (SQLException se) {
+                            se.printStackTrace();
+                        }
+                    }
+                try{
+                    Class.forName("com.mysql.jdbc.Driver");
+                    conn = DriverManager.getConnection(DB_URL, USER, PASS);
+                    stmt = conn.createStatement();
+                    PreparedStatement update = conn.prepareStatement
+                            ("INSERT INTO Map_belongs_to(mid, pmapid) VALUES(?, ?)");
+
+                    update.setInt(1, mid);
+                    update.setInt(2, pmapid.get(i));
+                    update.executeUpdate(); // Run query
+                }catch(SQLException se){
+                    se.printStackTrace();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }finally{
+                    try{
+                        if(stmt!=null)
+                            conn.close();
+                    }catch(SQLException se){
+                    }
+                    try{
+                        if(conn!=null)
+                            conn.close();
+                    }catch(SQLException se){
+                        se.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+
+
 
     /*
         USER COMMANDS
      */
 
-    // Delete match ids, seperated by ","
+    /* Delete match ids, seperated by ",". This is done by deleting a row in
+     * the database, then cascade.
+     */
     public static void delete(){
         Connection conn = null;
         Statement stmt = null;
@@ -637,7 +821,7 @@ public class Database {
             numbers[i] = Integer.parseInt(tokens[i]);}
 
 
-        String sql = "DELETE FROM Matches WHERE mid = ";
+        String sql = "DELETE FROM Map_belongs_to WHERE mid = ";
         for (int j = 0; j < numbers.length; j++){
             if(j == 0){
                 sql += numbers[0];
@@ -690,7 +874,7 @@ public class Database {
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
             stmt = conn.createStatement();
-            String sql = "DELETE FROM Matches WHERE complete = 0 AND (match_date = '"+yest+"' OR match_date = '"+twoz+"'  OR match_date = '"+threez+"') ";
+            String sql = "DELETE FROM Matches2 WHERE complete = 0 AND (match_date = '"+yest+"' OR match_date = '"+twoz+"'  OR match_date = '"+threez+"') ";
             stmt.executeUpdate(sql);
         }catch(SQLException se){
             se.printStackTrace();
@@ -763,20 +947,83 @@ public class Database {
 
 
     // Marks teams inactive if no matches for 90 days
-    public static void markinactive(){
+
+
+    public static void addmatches() {
+
+        System.out.println("Enter hltv links");
+        Scanner scanner = new Scanner(System.in);
+        String line = scanner.nextLine();
+
+
+        String[] values = line.split(", ");
+        for(String s: values) {
+            scrapepage("Insert", s);
+        }
+        System.out.println("Matches has been added");
+    }
+    public static void moveplayers(){
+        System.out.println("Enter teamid 1 (leaving team)");
+        Scanner scanner = new Scanner(System.in);
+        Integer tid1 = scanner.nextInt();
+
+        System.out.println("Enter teamid 2 (joining team)");
+        Scanner scanner2 = new Scanner(System.in);
+        Integer tid2 = scanner.nextInt();
+
         Connection conn = null;
         Statement stmt = null;
-        String sql = "UPDATE Teams" +
-                "    SET active = 0" +
-                "    WHERE tid IN (SELECT tid FROM (SELECT * FROM Teams" +
-                "            LEFT JOIN" +
-                "            (SELECT DISTINCT(tid_1) FROM Matches WHERE match_date >= CURRENT_DATE - INTERVAL 90 DAY) AS T" +
-                "    ON Teams.tid = T.tid_1" +
-                "    WHERE T.tid_1 is null) AS dum" +
-                "    LEFT JOIN" +
-                "            (SELECT DISTINCT(tid_2) FROM Matches WHERE match_date >= CURRENT_DATE - INTERVAL 90 DAY) AS TT" +
-                "    ON TT.tid_2 = dum.tid" +
-                "    WHERE TT.tid_2 is null AND tid != 40)";
+        try{
+            Class.forName("com.mysql.jdbc.Driver");
+            conn = DriverManager.getConnection(DB_URL, USER, PASS);
+            stmt = conn.createStatement();
+            String sql = "UPDATE Belongs_to" +
+                    "     SET tid = "+tid2+" WHERE tid = "+tid1+"";
+            stmt.executeUpdate(sql);
+        }catch(SQLException se){
+            se.printStackTrace();
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            try{
+                if(stmt!=null)
+                    conn.close();
+            }catch(SQLException se){
+            }
+            try{
+                if(conn!=null)
+                    conn.close();
+            }catch(SQLException se){
+                se.printStackTrace();
+            }
+        }
+        markteaminactive(tid1);
+        System.out.println("Players has been moved");
+    }
+
+    public static void markcomplete(){
+        Connection conn = null;
+        Statement stmt = null;
+        System.out.println("Enter match ids");
+        Scanner scanner = new Scanner(System.in);
+        String line = scanner.nextLine();
+        String[] tokens = line.split(", ");
+        Integer[] numbers = new Integer[tokens.length];
+
+        for (int i=0; i<numbers.length;i++){
+            numbers[i] = Integer.parseInt(tokens[i]);}
+
+
+        String sql = "UPDATE Matches2 SET COMPLETE = 1 WHERE mid = ";
+        for (int j = 0; j < numbers.length; j++){
+            if(j == 0){
+                sql += numbers[0];
+            }
+            else{
+                sql += " OR mid = " + numbers[j];
+            }
+        }
+        System.out.println(sql);
         try{
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -799,23 +1046,8 @@ public class Database {
                 se.printStackTrace();
             }
         }
-        System.out.println("Teams have been marked inactive");
+        System.out.println("matches has been marked complete");
     }
-
-    public static void addmatches() {
-
-        System.out.println("Enter hltv links");
-        Scanner scanner = new Scanner(System.in);
-        String line = scanner.nextLine();
-
-
-        String[] values = line.split(", ");
-        for(String s: values) {
-            scrapepage("Insert", s);
-        }
-        System.out.println("Matches has been added");
-    }
-
 
 
 

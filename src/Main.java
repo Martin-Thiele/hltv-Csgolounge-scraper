@@ -24,6 +24,13 @@ import static csgoscraper.Database.*;
 * @author Martin "Shrewbi" Thiele
 * @since  16-12-2015
 */
+// TODO: replace scanners with args
+// TODO: scrape csgl if link exists, but match not found on front page (Too many matches on their site)
+// TODO: paste to csv
+// TODO: GUI
+// TODO: optimize
+
+
 public class Main {
     // Scraping settings
     static String userAgent = "useragent";
@@ -260,72 +267,60 @@ public class Main {
 
             }
             if(bo > 0) {
-                // Insert match
+                int[] mapid   = new int[scrapemaps.size()];
+                int[] score_1 = new int[scrapemaps.size()];
+                int[] score_2 = new int[scrapemaps.size()];
+                for(int k = 0; k < scrapemaps.size(); k++){
+                    mapid[k] = (selectMapid(selectMapname(scrapemaps.get(k))));
+                    if (k > 0) { // if not first match
+                        score_1[k] = Integer.parseInt(scrapescores.get(2 * k));
+                        score_2[k] = Integer.parseInt(scrapescores.get(2 * k + 1));
+
+                    } else { // If first match
+                        score_1[k] = Integer.parseInt(scrapescores.get(0));
+                        score_2[k] = Integer.parseInt(scrapescores.get(1));
+                    }
+                }
                 if (whatdo.equals("Insert")) {
-                    for (int k = 0; k < bo; k++) {
                         insert(tid1,
                                 tid2,
+                                score_1,
+                                score_2,
+                                mapid,
                                 stringdate,
                                 stringtime,
-                                selectMapid(selectMapname(scrapemaps.get(k))),
                                 subcid,
                                 csgllink,
                                 odds1,
                                 odds2,
                                 page
                         );
-                    }
                     System.out.println("Match added: " + scrapeteams.get(0) + " - " + scrapeteams.get(1));
                     matchcount++;
                 }
                 // Update match
                 else {
                     // Mark matches complete - handling
-                    int t1wins = 0; 
-                    int t2wins = 0;
                     int mid = selectmid(page);
                     if (mid != 0) {
-                        for (int k = 0; k < bo; k++) {
-                            int score1;
-                            int score2;
-                            if (k > 0) { // if not first match
-                                score1 = Integer.parseInt(scrapescores.get(2 * k));
-                                score2 = Integer.parseInt(scrapescores.get(2 * k + 1));
 
-                            } else { // If first match
-                                score1 = Integer.parseInt(scrapescores.get(0));
-                                score2 = Integer.parseInt(scrapescores.get(1));
-                            }
-                            int mapid = selectMapid(selectMapname(scrapemaps.get(k)));
-                            int complete = 0;
-                            if((score1 > score2 && score1 > 14) || (score1 == 1 && score2 == 0 && mapid == 10 )){ // mapid 10 = unplayed
-                                t1wins++;
-                                complete = 1;
-                            }
-                            if((score2 > score1 && score2 > 14) || (score1 == 0 && score2 == 1 && mapid == 10)){
-                                t2wins++;
-                                complete = 1;
-                            }
-                            if(bo == 3 && (t1wins >= 2 || t2wins >= 2)) {complete = 1;} // if a team has won 2 maps, mark all maps complete
-                            if(bo == 5 && (t1wins >= 3 || t2wins >= 3)) {complete = 1;} // if a team has won 3 maps, mark all maps complete
 
                             update(
                                     tid1,
                                     odds1,
                                     tid2,
+                                    score_1,
+                                    score_2,
+                                    mapid,
                                     odds2,
                                     stringdate,
                                     stringtime,
-                                    mapid,
-                                    score1,
-                                    score2,
                                     subcid,
                                     csgllink,
-                                    mid,
-                                    complete
+                                    mid
                             );
                             mid++;
-                        }
+
 
                         System.out.println("Updated: " + scrapeteams.get(0) + " vs " + scrapeteams.get(1));
                         updatecount++;
@@ -418,7 +413,7 @@ public class Main {
         int tmp = 0;
         if(comp.contains("QuickShot")){        tmp = addsubcomp(comp); addcomplink(72, tmp);} 
         if(comp.contains("ESL")){              tmp = addsubcomp(comp); addcomplink(6,  tmp);}
-        if(comp.contains("ESL ESEA")){         tmp = addsubcomp(comp); addcomplink(45, tmp);}
+        if(comp.contains("ESL ESEA")){         tmp = addsubcomp(comp); addcomplink(45, tmp);} // Overwrites tmp if ESL
         if(comp.contains("FACEIT")){           tmp = addsubcomp(comp); addcomplink(11, tmp);}
         if(comp.contains("CEVO")){             tmp = addsubcomp(comp); addcomplink(2,  tmp);}
         if(comp.contains("DreamHack")){        tmp = addsubcomp(comp); addcomplink(3,  tmp);}
@@ -433,6 +428,8 @@ public class Main {
         if(comp.contains("CS Select")){        tmp = addsubcomp(comp); addcomplink(30, tmp);}
         if(comp.contains("99Damage")){         tmp = addsubcomp(comp); addcomplink(37, tmp);}
         if(comp.contains("Alientech")){        tmp = addsubcomp(comp); addcomplink(83, tmp);}
+        if(comp.contains("PGL")){              tmp = addsubcomp(comp); addcomplink(18, tmp);}
+        if(comp.contains("IEM")){              tmp = addsubcomp(comp); addcomplink(75, tmp);}
         return tmp;
 
     }
