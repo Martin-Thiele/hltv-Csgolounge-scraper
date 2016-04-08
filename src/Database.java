@@ -1,16 +1,20 @@
 package csgoscraper;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Scanner;
 import java.text.SimpleDateFormat;
 
-import static csgoscraper.Main.*;
 
 /**
-* @author Martin "Shrewbi" Thiele
-* @since  16-12-2015
+ * @author Martin "Shrewbi" Thiele
+ * * @version 1.0.1
+ * @since  1.0.1
 */
 public class Database {
     // JDBC driver name and database URL
@@ -44,7 +48,7 @@ public class Database {
 
             //Start query
             stmt = conn.createStatement();
-            String sql = "INSERT INTO Matches2"
+            String sql = "INSERT INTO Matches"
                        + "(tid_1, tid_2, match_date, match_time, subcid, complete, csglodds1, csglodds2, csgl, hltv) VALUES"
                        + "(?,?,?,?,?,?,?,?,?,?)";
             PreparedStatement prest;
@@ -63,7 +67,7 @@ public class Database {
             }
             else{prest.setString(9, csgllink);}
             prest.setString(10, hltv);
-            prest.executeUpdate(); // Run query
+            prest.executeUpdate();
             ResultSet rs = prest.getGeneratedKeys();
 
             if(rs.next())
@@ -103,17 +107,7 @@ public class Database {
      * @param mid     - Matchid
      */
     public static void update(int team_1, int odds1, int team_2, int[] score_1, int[] score_2, int[] mapid, int odds2, String date, String time, int subcid, String csgllink, int mid) {
-        if (team_1 == 0) {
-            team_1 = 108;
-        } // Error handling and change to team "TBD"
-        if (team_2 == 0) {
-            team_2 = 108;
-        } // ^
 
-        int tbdcheck = 0;
-        if(team_1 == 108 && team_2 == 108){
-            tbdcheck = 1;
-        }
         int t1win = 0;
         int t2win = 0;
         int complete = 0;
@@ -124,17 +118,16 @@ public class Database {
         if(mapid.length == 1){
             if(t1win+t2win == 1)        {complete = 1;}
         }
-        if(mapid.length == 2){
+        else if(mapid.length == 2){
             if(t1win+t2win == 2)        {complete = 1;}
         }
-        if(mapid.length == 3){
+        else if(mapid.length == 3){
             if(t1win == 2 || t2win == 2){complete = 1;}
         }
-        if(mapid.length == 5){
+        else if(mapid.length == 5){
             if(t1win == 3 || t2win == 3){complete = 1;}
         }
 
-        if(tbdcheck == 1) {
             Connection conn = null;
             Statement stmt = null;
             try {
@@ -142,66 +135,52 @@ public class Database {
 
                 // Open connection
                 conn = DriverManager.getConnection(DB_URL, USER, PASS);
-
+                PreparedStatement update;
                 //Start query
-                PreparedStatement update = conn.prepareStatement
-                        ("UPDATE Matches2 SET match_date = ?, match_time = ?, subcid = ?, complete = ?, csglodds1 = ?, csglodds2 = ?, csgl = ? WHERE mid = ?");
-
-                update.setString(1, date);
-                update.setString(2, time);
-                update.setInt(3, subcid);
-                update.setInt(4, 0);
-                update.setInt(5, 0);
-                update.setInt(6, 0);
-                update.setNull(7, Types.INTEGER);
-                update.setInt(8, mid);
-                update.executeUpdate(); // Run query
-            } catch (SQLException se) {
-                //Handle errors for JDBC
-                se.printStackTrace();
-            } catch (Exception e) {
-                //Handle errors for Class.forName
-                e.printStackTrace();
-            } finally {
-                //finally block used to close resources
-                try {
-                    if (stmt != null)
-                        conn.close();
-                } catch (SQLException se) {
+                if(csgllink == null){update = conn.prepareStatement
+                        ("UPDATE Matches SET tid_1 = ?, tid_2 = ?, match_date = ?, match_time = ?, " +
+                         "subcid = ? WHERE mid = ?");}
+                else {
+                    update = conn.prepareStatement
+                            ("UPDATE Matches SET tid_1 = ?, tid_2 = ?, match_date = ?, match_time = ?, " +
+                            "subcid = ?, csglodds1 = ?, csglodds2 = ?, csgl = ?, complete = ? WHERE mid = ?");
                 }
-                try {
-                    if (conn != null)
-                        conn.close();
-                } catch (SQLException se) {
-                    se.printStackTrace();
-                }
-            }
-        }
-        else if (odds1 != 0 && odds2 != 0 && csgllink != null && subcid != 154) {
-            Connection conn = null;
-            Statement stmt = null;
-            try {
-                Class.forName("com.mysql.jdbc.Driver");
 
-                // Open connection
-                conn = DriverManager.getConnection(DB_URL, USER, PASS);
-
-                //Start query
-                PreparedStatement update = conn.prepareStatement
-                     ("UPDATE Matches2 SET tid_1 = ?, tid_2 = ?, match_date = ?, match_time = ?, " +
-                      "subcid = ?, csglodds1 = ?, csglodds2 = ?, csgl = ?, complete = ? WHERE mid = ?");
 
                 update.setInt(1, team_1);
                 update.setInt(2, team_2);
                 update.setString(3, date);
                 update.setString(4, time);
                 update.setInt(5, subcid);
-                update.setInt(6, odds1);
-                update.setInt(7, odds2);
-                update.setString(8, csgllink);
-                update.setInt(9, complete);
-                update.setInt(10, mid);
-                update.executeUpdate(); // Run query
+                if(team_1 == 108 && team_2 == 108){
+                    if(csgllink != null) {
+                        update.setInt(6, 0);
+                        update.setInt(7, 0);
+                        update.setNull(8, Types.INTEGER);
+                        update.setInt(9, 0);
+                        update.setInt(10, 0);
+                    }
+                    else{
+                        update.setInt(6, 0);
+                    }
+                }
+                else {
+                    if (csgllink != null) {
+                        update.setInt(6, odds1);
+                        update.setInt(7, odds2);
+                        update.setString(8, csgllink);
+                        if (subcid == 154) {
+                            update.setInt(9, 0);
+                        } else {
+                            update.setInt(9, complete);
+                        }
+                        update.setInt(10, mid);
+                    }
+                    else{
+                        update.setInt(6, mid);
+                    }
+                }
+                update.executeUpdate();
             } catch (SQLException se) {
                 //Handle errors for JDBC
                 se.printStackTrace();
@@ -222,55 +201,13 @@ public class Database {
                     se.printStackTrace();
                 }
             }
-        }
-
-        else if (odds1 == 0 && odds2 == 0 && csgllink == null) {
-            Connection conn = null;
-            Statement stmt = null;
-            try {
-                Class.forName("com.mysql.jdbc.Driver");
-
-                // Open connection
-                conn = DriverManager.getConnection(DB_URL, USER, PASS);
-
-                //Start query
-                PreparedStatement update = conn.prepareStatement
-                        ("UPDATE Matches2 SET tid_1 = ?, tid_2 = ?, match_date = ?, match_time = ?,  subcid = ? WHERE mid = ?");
-
-                update.setInt(1, team_1);
-                update.setInt(2, team_2);
-                update.setString(3, date);
-                update.setString(4, time);
-                update.setInt(5, subcid);
-                update.setInt(6, mid);
-                update.executeUpdate(); // Run query
-            } catch (SQLException se) {
-                //Handle errors for JDBC
-                se.printStackTrace();
-            } catch (Exception e) {
-                //Handle errors for Class.forName
-                e.printStackTrace();
-            } finally {
-                //finally block used to close resources
-                try {
-                    if (stmt != null)
-                        conn.close();
-                } catch (SQLException se) {
-                }
-                try {
-                    if (conn != null)
-                        conn.close();
-                } catch (SQLException se) {
-                    se.printStackTrace();
-                }
-            }
-        }
-        else{System.out.println("wrong odds: "+csgllink+ " ("+odds1+"% - "+odds2+"%)");}
         updatemaps("update", mid, score_1, score_2, mapid);
     }
 
     /*
-        HELPER FUNCTIONS
+	 *
+     *  HELPER FUNCTIONS
+	 *
      */
 
     /** Gives a list of incomplete matches
@@ -285,7 +222,8 @@ public class Database {
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
             stmt = conn.createStatement();
 
-            String sql = "SELECT * FROM Matches2 WHERE complete = 0 AND hltv != '' ORDER BY mid asc";
+            String sql = "SELECT * FROM Matches WHERE (complete = 0 OR complete is null) AND hltv != '' " +
+                    "AND (Match_date < DATE_ADD(NOW(), INTERVAL +3 DAY) OR Match_date is null)";
             ResultSet rs = stmt.executeQuery(sql);
             while(rs.next()){
                 incommatches.add(rs.getString("hltv"));
@@ -320,11 +258,11 @@ public class Database {
      * @param subcomp - Subcompetition name
      * @return int - Subcompetition id
      */
-    public static int selectSubcid(String subcomp){
+    public static int getSubcid(String subcomp){
         Connection conn = null;
         Statement stmt = null;
         String subfix = subcomp.replaceAll("'", "''");
-        int subcid = 0;
+        int subcid = 154; // filler sub competition id
         try{
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
@@ -368,7 +306,7 @@ public class Database {
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
             stmt = conn.createStatement();
-            String sql = "SELECT mid FROM Matches2 WHERE hltv ='"+hltv+"' LIMIT 1";
+            String sql = "SELECT mid FROM Matches WHERE hltv ='"+hltv+"' LIMIT 1";
             ResultSet rs = stmt.executeQuery(sql);
             while(rs.next()){
                 mid = rs.getInt("mid");
@@ -395,52 +333,25 @@ public class Database {
     }
 
 
-    /** Converts map name to mapid
-     * @param mapname - Name of map
-     * @return int - mapid
-     */
-    public static int selectMapid(String mapname){
-        Connection conn = null;
-        Statement stmt = null;
-        int mapid = 0;
-        try{
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
-            stmt = conn.createStatement();
-            String sql = "SELECT mapid FROM Maps WHERE name ='"+mapname+"' LIMIT 1";
-            ResultSet rs = stmt.executeQuery(sql);
-            while(rs.next()){
-                mapid = rs.getInt("mapid");
-            }
-            rs.close();
-        }catch(SQLException se){
-            se.printStackTrace();
-        }catch(Exception e){
-            e.printStackTrace();
-        }finally{
-            try{
-                if(stmt!=null)
-                    conn.close();
-            }catch(SQLException se){
-            }
-            try{
-                if(conn!=null)
-                    conn.close();
-            }catch(SQLException se){
-                se.printStackTrace();
-            }
-        }
-        return mapid;
-    }
 
     /** Converts team name to teamid
      * @param team - Name of team
      * @return int - Team id
      */
-    public static int selectTid(String team){
+    public static int getTid(String team, String comp){
+
+        if(comp != null && comp.contains("King of Nordic")){
+            if(team.equals("KoN Denmark") || team.equals("Denmark")){return 652;}
+            if(team.equals("KoN Norway") || team.equals("Norway")){return 654;}
+            if(team.equals("KoN Sweden") || team.equals("Sweden")){return 653;}
+            if(team.equals("KoN Finland") || team.equals("Finland")){return 655;}
+            else{return 108;}
+        }
+
+        int tid = 108; // filler team
+
         Connection conn = null;
         Statement stmt = null;
-        int tid = 0;
         int active = 0;
         String teamfix = team.replaceAll("'", "''");
         try{
@@ -479,8 +390,9 @@ public class Database {
     }
 
 
-
-    // Marks a team active
+    /** Marks a team active
+     * @param id - Team id
+     */
     public static void markteamactive(int id){
         Connection conn = null;
         Statement stmt = null;
@@ -510,7 +422,10 @@ public class Database {
             }
         }
     }
-    // Marks a team inactive
+
+    /** Marks a team inactive
+     * @param id - Team id
+     */
     public static void markteaminactive(int id){
         Connection conn = null;
         Statement stmt = null;
@@ -556,7 +471,7 @@ public class Database {
             Class.forName("com.mysql.jdbc.Driver");
             conn = DriverManager.getConnection(DB_URL, USER, PASS);
             stmt = conn.createStatement();
-            String sql = "SELECT COUNT(*) AS Count FROM Matches2 WHERE hltv = '"+hltv+"' LIMIT 1";
+            String sql = "SELECT COUNT(*) AS Count FROM Matches WHERE hltv = '"+hltv+"' LIMIT 1";
             ResultSet rs = stmt.executeQuery(sql);
             while(rs.next()){
                 check = rs.getInt("Count");
@@ -661,6 +576,14 @@ public class Database {
         }
     }
 
+    /**
+     * Update/Insert played maps for a match
+     * @param whatdo  - Whether to update or insert
+     * @param mid     - Match id to link the maps to the match
+     * @param score_1 - Scores for team 1
+     * @param score_2 - Scores for team 2
+     * @param mapid   - Maps for the match
+     */
     public static void updatemaps(String whatdo, int mid, int[] score_1, int[] score_2, int[] mapid){
         if(whatdo.equals("update")) {
             Connection conn = null;
@@ -705,7 +628,7 @@ public class Database {
                     update.setInt(2, score_1[i]);
                     update.setInt(3, score_2[i]);
                     update.setInt(4, pmapid.get(i));
-                    update.executeUpdate(); // Run query
+                    update.executeUpdate();
 
                 } catch (SQLException se) {
                     se.printStackTrace();
@@ -774,7 +697,7 @@ public class Database {
 
                     update.setInt(1, mid);
                     update.setInt(2, pmapid.get(i));
-                    update.executeUpdate(); // Run query
+                    update.executeUpdate();
                 }catch(SQLException se){
                     se.printStackTrace();
                 }catch(Exception e){
@@ -795,258 +718,4 @@ public class Database {
             }
         }
     }
-
-
-
-
-    /*
-        USER COMMANDS
-     */
-
-    /* Delete match ids, seperated by ",". This is done by deleting a row in
-     * the database, then cascade.
-     */
-    public static void delete(){
-        Connection conn = null;
-        Statement stmt = null;
-        System.out.println("Enter match ids");
-        Scanner scanner = new Scanner(System.in);
-        String line = scanner.nextLine();
-        String[] tokens = line.split(", ");
-        Integer[] numbers = new Integer[tokens.length];
-
-        for (int i=0; i<numbers.length;i++){
-            numbers[i] = Integer.parseInt(tokens[i]);}
-
-
-        String sql = "DELETE FROM Map_belongs_to WHERE mid = ";
-        for (int j = 0; j < numbers.length; j++){
-            if(j == 0){
-                sql += numbers[0];
-            }
-            else{
-                sql += " OR mid = " + numbers[j];
-            }
-        }
-        System.out.println(sql);
-        try{
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
-            stmt = conn.createStatement();
-            stmt.executeUpdate(sql);
-        }catch(SQLException se){
-            se.printStackTrace();
-        }catch(Exception e){
-            e.printStackTrace();
-        }finally{
-            try{
-                if(stmt!=null)
-                    conn.close();
-            }catch(SQLException se){
-            }
-            try{
-                if(conn!=null)
-                    conn.close();
-            }catch(SQLException se){
-                se.printStackTrace();
-            }
-        }
-        System.out.println("matches has been deleted");
-    }
-
-    // Deletes matches if complete = 0 and date is less than 3 days of today
-    public static void deleteinactive(){
-        Connection conn = null;
-        Statement stmt = null;
-        SimpleDateFormat format1 = new SimpleDateFormat("yyyy-MM-dd");
-        Calendar yesterday = Calendar.getInstance();
-        yesterday.add(Calendar.DATE, -1);
-        Calendar two = Calendar.getInstance();
-        two.add(Calendar.DATE, -2);
-        Calendar three = Calendar.getInstance();
-        three.add(Calendar.DATE, -3);
-        String yest = format1.format(yesterday.getTime());
-        String twoz = format1.format(two.getTime());
-        String threez = format1.format(three.getTime());
-        try{
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
-            stmt = conn.createStatement();
-            String sql = "DELETE FROM Matches2 WHERE complete = 0 AND (match_date = '"+yest+"' OR match_date = '"+twoz+"'  OR match_date = '"+threez+"') ";
-            stmt.executeUpdate(sql);
-        }catch(SQLException se){
-            se.printStackTrace();
-        }catch(Exception e){
-            e.printStackTrace();
-        }finally{
-            try{
-                if(stmt!=null)
-                    conn.close();
-            }catch(SQLException se){
-            }
-            try{
-                if(conn!=null)
-                    conn.close();
-            }catch(SQLException se){
-                se.printStackTrace();
-            }
-        }
-        System.out.println("inactive matches has been deleted");
-    }
-
-    // Delete playertransfers in case of mistakes, seperated by ","
-    public static void deletetransfer(){
-        Connection conn = null;
-        Statement stmt = null;
-        System.out.println("Enter transfer ids");
-        Scanner scanner = new Scanner(System.in);
-        String line = scanner.nextLine();
-        String[] tokens = line.split(", ");
-        Integer[] numbers = new Integer[tokens.length];
-
-        for (int i=0; i<numbers.length;i++){
-            numbers[i] = Integer.parseInt(tokens[i]);}
-
-
-        String sql = "DELETE FROM Playertransfers WHERE id = ";
-        for (int j = 0; j < numbers.length; j++){
-            if(j == 0){
-                sql += numbers[0];
-            }
-            else{
-                sql += " OR id = " + numbers[j];
-            }
-        }
-        System.out.println(sql);
-        try{
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
-            stmt = conn.createStatement();
-            stmt.executeUpdate(sql);
-        }catch(SQLException se){
-            se.printStackTrace();
-        }catch(Exception e){
-            e.printStackTrace();
-        }finally{
-            try{
-                if(stmt!=null)
-                    conn.close();
-            }catch(SQLException se){
-            }
-            try{
-                if(conn!=null)
-                    conn.close();
-            }catch(SQLException se){
-                se.printStackTrace();
-            }
-        }
-        System.out.println("transfers has been deleted");
-    }
-
-
-    // Marks teams inactive if no matches for 90 days
-
-
-    public static void addmatches() {
-
-        System.out.println("Enter hltv links");
-        Scanner scanner = new Scanner(System.in);
-        String line = scanner.nextLine();
-
-
-        String[] values = line.split(", ");
-        for(String s: values) {
-            scrapepage("Insert", s);
-        }
-        System.out.println("Matches has been added");
-    }
-    public static void moveplayers(){
-        System.out.println("Enter teamid 1 (leaving team)");
-        Scanner scanner = new Scanner(System.in);
-        Integer tid1 = scanner.nextInt();
-
-        System.out.println("Enter teamid 2 (joining team)");
-        Scanner scanner2 = new Scanner(System.in);
-        Integer tid2 = scanner.nextInt();
-
-        Connection conn = null;
-        Statement stmt = null;
-        try{
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
-            stmt = conn.createStatement();
-            String sql = "UPDATE Belongs_to" +
-                    "     SET tid = "+tid2+" WHERE tid = "+tid1+"";
-            stmt.executeUpdate(sql);
-        }catch(SQLException se){
-            se.printStackTrace();
-        }catch(Exception e){
-            e.printStackTrace();
-        }finally{
-            try{
-                if(stmt!=null)
-                    conn.close();
-            }catch(SQLException se){
-            }
-            try{
-                if(conn!=null)
-                    conn.close();
-            }catch(SQLException se){
-                se.printStackTrace();
-            }
-        }
-        markteaminactive(tid1);
-        System.out.println("Players has been moved");
-    }
-
-    public static void markcomplete(){
-        Connection conn = null;
-        Statement stmt = null;
-        System.out.println("Enter match ids");
-        Scanner scanner = new Scanner(System.in);
-        String line = scanner.nextLine();
-        String[] tokens = line.split(", ");
-        Integer[] numbers = new Integer[tokens.length];
-
-        for (int i=0; i<numbers.length;i++){
-            numbers[i] = Integer.parseInt(tokens[i]);}
-
-
-        String sql = "UPDATE Matches2 SET COMPLETE = 1 WHERE mid = ";
-        for (int j = 0; j < numbers.length; j++){
-            if(j == 0){
-                sql += numbers[0];
-            }
-            else{
-                sql += " OR mid = " + numbers[j];
-            }
-        }
-        System.out.println(sql);
-        try{
-            Class.forName("com.mysql.jdbc.Driver");
-            conn = DriverManager.getConnection(DB_URL, USER, PASS);
-            stmt = conn.createStatement();
-            stmt.executeUpdate(sql);
-        }catch(SQLException se){
-            se.printStackTrace();
-        }catch(Exception e){
-            e.printStackTrace();
-        }finally{
-            try{
-                if(stmt!=null)
-                    conn.close();
-            }catch(SQLException se){
-            }
-            try{
-                if(conn!=null)
-                    conn.close();
-            }catch(SQLException se){
-                se.printStackTrace();
-            }
-        }
-        System.out.println("matches has been marked complete");
-    }
-
-
-
 }

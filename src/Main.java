@@ -6,27 +6,22 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
-import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Scanner;
 
 import static csgoscraper.Database.*;
 
 /**
-* @author Martin "Shrewbi" Thiele
-* @since  16-12-2015
+ * @author Martin "Shrewbi" Thiele
+ * @version 1.0.1
+ * @since  1.0.1
 */
-// TODO: replace scanners with args
 // TODO: scrape csgl if link exists, but match not found on front page (Too many matches on their site)
-// TODO: paste to csv
 // TODO: GUI
 // TODO: optimize
 
@@ -34,7 +29,6 @@ import static csgoscraper.Database.*;
 public class Main {
     // Scraping settings
     static String userAgent = "useragent";
-    static int i = 10; // Scraping timer in minutes
 
     static int subcide = 0; // Amount of subcid errors
     static int teame = 0; // Amount of team errors
@@ -45,25 +39,18 @@ public class Main {
     static ArrayList<String>  scrapedlinks = new ArrayList<>();
     static ArrayList<Integer> scrapedtid1  = new ArrayList<>();
     static ArrayList<Integer> scrapedtid2  = new ArrayList<>();
-    static int sz;
+    static ArrayList<String> scrapedcomps  = new ArrayList<>();
+    static ArrayList<String>  usedlinks    = new ArrayList<>();
 
     // Scrape for matches then insert or update
     public static void getmatches() {
-        updatecount = 0;
-        matchcount = 0;
-        String gettime = getNextTime();
+        updatecount = 0; // How many matches got updated
+        matchcount = 0;  // How many matches got added
 
-        // Reset variables
-        ArrayList<String> scrapedteam1 = new ArrayList<>();
-        ArrayList<String> scrapedteam2 = new ArrayList<>();
+
+
+
         ArrayList<String> matchpages   = new ArrayList<>();
-        ArrayList<String> incommatches = new ArrayList<>();
-        scrapedodds1 = new ArrayList<>();
-        scrapedodds2 = new ArrayList<>();
-        scrapedtid1  = new ArrayList<>();
-        scrapedtid2  = new ArrayList<>();
-        scrapedlinks = new ArrayList<>();
-
 
         //Hltv scraper
         try {
@@ -78,72 +65,13 @@ public class Main {
                 matchpages.add(match);
             }
         } catch (IOException e) {
-            //e.printStackTrace();
+            e.printStackTrace();
             System.out.println(e + " for hltv");
         }
 
 
-        //csgolounge scraper
-        try {
-            // Connect to scrape page
-            Document doc = Jsoup.connect("http://www.csgolounge.com").userAgent(userAgent).get();
-            // Scrape matchlinks
-            Elements links = doc.select("div.match a[href]");
-            for (Element link : links) {
-                String scraped = link.attr("href");
-                if(scraped.contains("predict")){}
-                else {
-                    scrapedlinks.add(scraped);
-                }
-            }
-
-
-            // Scrape teams
-            Elements teams = doc.select("div.match div.teamtext b");
-            int count = 0;
-            for (Element team : teams) {
-                String scraped = team.text();
-                count++;
-                if(count % 2 != 0) {scrapedteam1.add(scraped);}
-                else{scrapedteam2.add(scraped);}
-            }
-
-            // Convert to teamids
-            for(int s = 0; s < scrapedteam1.size(); s++){
-                int stid1 = selectTid(scrapedteam1.get(s));
-                int stid2 = selectTid(scrapedteam2.get(s));
-                scrapedtid1.add(stid1);
-                scrapedtid2.add(stid2);
-            }
-            sz = scrapedtid1.size();
-
-
-            // Scrape odds
-            Elements odds = doc.select("div.match div.teamtext i");
-            count = 0;
-            for (Element odd : odds) {
-                String scraped = odd.text();
-                String scrapeodds;
-                count++;
-                switch (scraped.length()) {
-                    case 2:  scrapeodds = scraped.substring(0,1); break;
-                    case 3:  scrapeodds = scraped.substring(0,2); break;
-                    case 4:  scrapeodds = scraped.substring(0,3); break;
-                    default: scrapeodds = "0";
-                }
-                if(count % 2 != 0){scrapedodds1.add(Integer.parseInt(scrapeodds));}
-                else{scrapedodds2.add(Integer.parseInt(scrapeodds));}
-            }
-        }
-
-        catch (IOException e) {
-            //e.printStackTrace();
-            System.out.println(e + " for csgolounge");
-        }
-
-
         // Update matches
-        incommatches = getIncomplete(); // Get list of incomplete matches
+        ArrayList<String> incommatches = getIncomplete(); // Get list of incomplete matches
         System.out.println(incommatches.size()+" active matches");
         for (int j = 0; j < incommatches.size(); j++ ){
             scrapepage("Update", incommatches.get(j));
@@ -158,7 +86,6 @@ public class Main {
         System.out.println(updatecount+" matches updated");
         System.out.println("Team errors: "+ teame);
         System.out.println("Competition errors: "+ subcide);
-        System.out.println(gettime);
 
 
     }
@@ -173,18 +100,12 @@ public class Main {
         ArrayList<String> scrapescores = new ArrayList<>();
         String stringdate;
         String stringtime;
+
         try {
             // Connect to hltv matchpage
             Document matchpage = Jsoup.connect(page).userAgent(userAgent).get();
             // Scrape for teams and add to arraylist
-            Elements teams = matchpage.select("div.centerfade span a.nolinkstyle");
-            for (Element team : teams) {
-                scrapeteams.add(team.text());
-            }
-            // Errorhandling for unknown team names and empty list
-            if(scrapeteams.isEmpty()){scrapeteams.add("TBD");scrapeteams.add("TBD");}
-            if(selectTid(scrapeteams.get(0)) == 0){scrapeteams.set(0, "TBD"); teame++;}
-            if(selectTid(scrapeteams.get(1)) == 0){scrapeteams.set(1, "TBD"); teame++;}
+
 
             // Get date
             Elements sd  = matchpage.select("div[style=padding:5px;] span[style=font-size:14px;]");
@@ -193,22 +114,23 @@ public class Main {
             // Get time
             Elements time  = matchpage.select("div[style=padding:5px;] span[style=margin-left:10px;]");
             stringtime= time.text();
-
             // Get competition
             Elements comp = matchpage.select("div[style=padding:5px;] div[style=text-align:center;font-size: 18px;] a");
             String competition = comp.text();
 
             // Convert and check competition
-            int subcid = selectSubcid(competition);
-            if(subcid == 0){
-                int checkcomp = frequentcomp(competition); // Check if competition includes name from frequent competition hosts
-                if(checkcomp == 0) {
-                    subcid = 154; // filler subcompetition id
-                }
-                else{
-                    subcid = checkcomp;
-                }
+            int subcid = getSubcid(competition);
+
+            // Scrape for teams and add to arraylist
+            Elements teams = matchpage.select("div.centerfade span a.nolinkstyle");
+            for (Element team : teams) {
+                scrapeteams.add(team.text());
             }
+
+            if(scrapeteams.isEmpty()){scrapeteams.add("TBD");scrapeteams.add("TBD");}
+            if(getTid(scrapeteams.get(0), null) == 0){scrapeteams.set(0, "TBD"); teame++;}
+            if(getTid(scrapeteams.get(1), null) == 0){scrapeteams.set(1, "TBD"); teame++;}
+
 
             // Get maps
             Elements maps = matchpage.select("div[style=border: 1px" +
@@ -245,33 +167,44 @@ public class Main {
             }
 
             // Get database variables
-            int tid1 = selectTid(scrapeteams.get(0)); // convert teamid to teamname
-            int tid2 = selectTid(scrapeteams.get(1)); // ^
-            stringdate = formatdate(stringdate);      // Formatdate to proper database format
+            int tid1 = getTid(scrapeteams.get(0), competition); // convert teamid to teamname
+            int tid2 = getTid(scrapeteams.get(1), competition); // ^
+            stringdate = formatdate(stringdate);                // Formatdate to proper database format
+
+            // Errorhandling for unknown team names and empty list
+            if(scrapeteams.isEmpty()){scrapeteams.add("TBD");scrapeteams.add("TBD");}
+            if(tid1 == 0){scrapeteams.set(0, "TBD"); teame++;}
+            if(tid2 == 0){scrapeteams.set(1, "TBD"); teame++;}
 
             // Get odds
             int odds1 = 0;
             int odds2 = 0;
             String csgllink = null;
+            int sz = scrapedtid1.size();
             for(int k = 0; k < sz; k++){  // Match given csgl team id with database team ids
-                if(tid1 == scrapedtid1.get(k) && tid2 == scrapedtid2.get(k)){        // If team 1 = team 1
-                    odds1 = scrapedodds1.get(k);
-                    odds2 = scrapedodds2.get(k);
-                    csgllink = "http://csgolounge.com/".concat(scrapedlinks.get(k));
+                if(tid1 == scrapedtid1.get(k) && tid2 == scrapedtid2.get(k)&& !(usedlinks.contains(scrapedlinks.get(k)))){        // If team 1 = team 1
+                        odds1 = scrapedodds1.get(k);
+                        odds2 = scrapedodds2.get(k);
+                        String tmp = scrapedlinks.get(k);
+                        csgllink = "http://csgolounge.com/".concat(tmp);
+                        usedlinks.add(tmp);
+                        break;
                 }
-                else if(tid2 == scrapedtid1.get(k) && tid1 == scrapedtid2.get(k)) {  // If team 2 = team 1
-                    odds2 = scrapedodds1.get(k);
-                    odds1 = scrapedodds2.get(k);
-                    csgllink = "http://csgolounge.com/".concat(scrapedlinks.get(k));
+                else if(tid2 == scrapedtid1.get(k) && tid1 == scrapedtid2.get(k) && !(usedlinks.contains(scrapedlinks.get(k)))) {  // If team 2 = team 1
+                        odds2 = scrapedodds1.get(k);
+                        odds1 = scrapedodds2.get(k);
+                        String tmp = scrapedlinks.get(k);
+                        csgllink = "http://csgolounge.com/".concat(tmp);
+                        usedlinks.add(tmp);
+                        break;
                 }
-
             }
-            if(bo > 0) {
+
                 int[] mapid   = new int[scrapemaps.size()];
                 int[] score_1 = new int[scrapemaps.size()];
                 int[] score_2 = new int[scrapemaps.size()];
                 for(int k = 0; k < scrapemaps.size(); k++){
-                    mapid[k] = (selectMapid(selectMapname(scrapemaps.get(k))));
+                    mapid[k] = selectMapname(scrapemaps.get(k));
                     if (k > 0) { // if not first match
                         score_1[k] = Integer.parseInt(scrapescores.get(2 * k));
                         score_2[k] = Integer.parseInt(scrapescores.get(2 * k + 1));
@@ -302,9 +235,7 @@ public class Main {
                 else {
                     // Mark matches complete - handling
                     int mid = selectmid(page);
-                    if (mid != 0) {
-
-
+                    if(mid == 0){System.out.println("error: match id is zero"); return;}
                             update(
                                     tid1,
                                     odds1,
@@ -319,16 +250,11 @@ public class Main {
                                     csgllink,
                                     mid
                             );
-                            mid++;
-
-
                         System.out.println("Updated: " + scrapeteams.get(0) + " vs " + scrapeteams.get(1));
                         updatecount++;
-                    }
-                    else{System.out.println("MID ERROR");} // Something bad happened
+
                 }
 
-            }
         }catch (IOException e) {
            // e.printStackTrace();
             System.out.println(e + " for hltv matchpage");
@@ -359,16 +285,6 @@ public class Main {
         return returndate;
     }
 
-    /** print next scrape time
-     * @return String - time + i minutes
-     */
-    public static String getNextTime(){
-        DateFormat nextformat = new SimpleDateFormat("HH:mm:ss");
-        Calendar next = Calendar.getInstance();
-        next.add(Calendar.MINUTE, i);
-        String time = "Next scrape at: "+nextformat.format(next.getTime());
-        return time;
-    }
 
     /**
      *
@@ -386,20 +302,25 @@ public class Main {
         return result;
     }
 
-    public static String selectMapname(String imgsrc){
-        String mapname = "TBA";
+    /**
+     *
+     * @param imgsrc hltv mapimage
+     * @return mapid
+     */
+    public static Integer selectMapname(String imgsrc){
+        int mapname = 0;
         switch (imgsrc){
-        case "http://static.hltv.org//images/hotmatch/default.png":         mapname = "Unplayed"; break;
-            case "http://static.hltv.org//images/hotmatch/tba.png":         mapname = "TBA"; break;
-            case "http://static.hltv.org//images/hotmatch/mirage.png":      mapname = "de_mirage"; break;
-            case "http://static.hltv.org//images/hotmatch/cache.png":       mapname = "de_cache"; break;
-            case "http://static.hltv.org//images/hotmatch/cobblestone.png": mapname = "de_cbble"; break;
-            case "http://static.hltv.org//images/hotmatch/dust2.png":       mapname = "de_dust_2"; break;
-            case "http://static.hltv.org//images/hotmatch/nuke.png":        mapname = "de_nuke"; break;
-            case "http://static.hltv.org//images/hotmatch/season.png":      mapname = "de_season"; break;
-            case "http://static.hltv.org//images/hotmatch/inferno.png":     mapname = "de_inferno"; break;
-            case "http://static.hltv.org//images/hotmatch/overpass.png":    mapname = "de_overpass"; break;
-            case "http://static.hltv.org//images/hotmatch/train.png":       mapname = "de_train"; break;
+        case "http://static.hltv.org//images/hotmatch/default.png":         mapname = 10; break;
+            case "http://static.hltv.org//images/hotmatch/tba.png":         mapname = 9; break;
+            case "http://static.hltv.org//images/hotmatch/mirage.png":      mapname = 6; break;
+            case "http://static.hltv.org//images/hotmatch/cache.png":       mapname = 7; break;
+            case "http://static.hltv.org//images/hotmatch/cobblestone.png": mapname = 5; break;
+            case "http://static.hltv.org//images/hotmatch/dust2.png":       mapname = 2; break;
+            case "http://static.hltv.org//images/hotmatch/nuke.png":        mapname = 1; break;
+            case "http://static.hltv.org//images/hotmatch/season.png":      mapname = 4; break;
+            case "http://static.hltv.org//images/hotmatch/inferno.png":     mapname = 3; break;
+            case "http://static.hltv.org//images/hotmatch/overpass.png":    mapname = 8; break;
+            case "http://static.hltv.org//images/hotmatch/train.png":       mapname = 11; break;
         }
         return mapname;
     }
@@ -434,19 +355,14 @@ public class Main {
 
     }
 
-
-    // Runner that runs the program
-    public static Runnable runner = new Runnable() {
-        public void run() {
-            teame   = 0; // Reset team errors
-            subcide = 0; // Reset competition errors
-            getmatches();
-        }
-    };
     public static void main(String[] args) {
-        // Start runner every i minute
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        executor.scheduleAtFixedRate(runner, 0, i, TimeUnit.MINUTES);
-
+        Csglscraper derp = new Csglscraper();
+        scrapedtid1 = derp.gettids1();
+        scrapedtid2 = derp.gettids2();
+        scrapedodds1 = derp.getodds1();
+        scrapedodds2 = derp.getodds2();
+        scrapedcomps = derp.getcomps();
+        scrapedlinks = derp.getlinks();
+        getmatches();
     }
 }
