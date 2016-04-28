@@ -1,0 +1,17 @@
+.footer{
+	margin: 0 auto;
+	width: 900px;
+	background-color: #080E15;
+	font-family: font-family: 'Open Sans';
+	vertical-align: middle;
+	border-bottom-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+}
+.link{
+	padding: 10px;
+	color: #C1C1C1 !important;
+}
+
+p{
+	color: #757575;
+}

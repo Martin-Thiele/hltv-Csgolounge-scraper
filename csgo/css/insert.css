@@ -1,0 +1,138 @@
+
+.maindiv {
+    margin:30px auto;
+    width: 900px;
+    height: 500px;
+    background: #fff;
+	padding-top:0px;
+	font-family: 'Open Sans';
+	font-size:14px;
+	}
+.title {
+	font-family: 'Open Sans';
+	width:0px;
+	height:70px;
+	text-shadow:0px 0px 0px #cfcfcf; 
+	font-size:16px;
+	text-align:center;
+	}
+.form_div {
+	width:100%;
+	margin: 0 auto;
+	}
+form{
+	width:350px;
+	border:1px solid #aaa;
+	padding:10px 30px 40px 30px;
+	margin:0 auto;
+	background-color:#E3E3E3;
+	}
+textarea{
+	font-family: 'Open Sans';
+	width:100%; 
+	height:60px; 
+	border-radius:1px;
+	box-shadow:0px 0px 1px 2px #123456; 
+	margin-top:10px;
+	padding:px;
+	border:none;
+	}	
+.input{ 
+	width:100%; 
+	height:30px; 
+	border-radius:2px;
+	box-shadow:0px 0px 1px 2px #123456; 
+	margin-top:10px;
+	padding:7px;
+	border:none;
+	margin-bottom:20px;
+	font-family: 'Open Sans';
+	}
+.formget{
+	float:right;
+	}
+p{
+	font-family: 'Open Sans';
+	color:black;
+	text-align:center;
+	margin-left: 0px !important;
+	margin-right: 0px !important;
+	}
+span{
+	}
+.submit {
+  font-family: 'Open Sans';
+  position: relative;
+  vertical-align: top;
+  width: 100%;
+  height: 60px;
+  padding: 0;
+  font-size: 22px;
+  color: white;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: #3498db;
+  border: 0;
+  border-bottom: 2px solid #2a8bcc;
+  cursor: pointer;
+  -webkit-box-shadow: inset 0 -2px #2a8bcc;
+  box-shadow: inset 0 -2px #2a8bcc;
+}
+.submit:active {
+  top: 1px;
+  outline: none;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+.bs-example{
+  font-family: 'Open Sans';
+  position: relative;
+  margin: 50px;
+}
+.typeahead, .tt-query, .tt-hint {
+	font-family: 'Open Sans';
+	border-radius: 2px;
+	font-size: 20px;
+	height: 30px;
+	line-height: 20px;
+	outline: medium none;
+	padding:7px;
+	border:none;
+	border-radius:2px;
+	box-shadow:0px 0px 1px 2px #123456;
+	border:none;
+	margin-bottom:10px;
+	width: 100%;
+	}
+}
+
+.tt-hint {
+  color: #123456;
+}
+.tt-dropdown-menu {
+  font-family: 'Open Sans';
+  background-color: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  margin-top: -10px;
+  padding: 0px 0;
+  width: 100%;
+}
+.tt-suggestion {
+  font-family: 'Open Sans';
+  font-size: 20px;
+  line-height: 18px;
+  padding: 2px 0px;
+  vertical-align: middle;
+}
+.tt-suggestion.tt-is-under-cursor {
+  background-color: #0097CF;
+  color: #0097CF;
+  font-family: 'Open Sans';
+  vertical-align: middle;
+}
+.tt-suggestion p {
+	font-size: 20px;
+	vertical-align: bottom;
+}

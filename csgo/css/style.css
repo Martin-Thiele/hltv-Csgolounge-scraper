@@ -1,0 +1,284 @@
+html{
+  background: #1D1F25;
+
+
+}
+
+img {
+  max-width: 100%
+}
+
+a:link{color: #2165A6;
+	   text-decoration: none;}
+a:visited{color: #2165A6;}
+a:hover{text-decoration: underline;}
+a:active{color: #2165A6;}
+
+.wrap{
+	background-color: white;
+	margin: 0 auto;
+	width: 900px;
+	height: auto;
+	padding-bottom: 20px;
+	clear: both;
+}
+.wrap2{
+	background-color: white;
+	margin: 0 auto;
+	width: 900px;
+	border: solid 1px;
+}
+.wrap3{
+	background-color: white;
+	margin: 0 auto;
+	width: 900px;
+}
+.wrapmatch{
+	background-color: white;
+	margin: 0 auto;
+	width: 900px;
+	text-align: center;
+}
+.wrapleft{
+	background-color: white;
+	float: left;
+	width: 300px;
+	min-height: 300px;
+	display: inline-block;
+}
+.wrapright{
+	background-color: white;
+	float: left;
+	width: 300px;
+	display: inline-block;
+	min-height: 200px;
+	height: auto;
+}
+.wrapright2{
+	background-color: white;
+	float: left;
+	width: 600px;
+	display: inline-block;
+	min-height: 320px;
+	margin-bottom: 20px;
+}
+.wrapmatchteam{
+	display:inline-block;
+	vertical-align: top;
+}
+#result{
+    font-size: 24px;
+    width: 150px;
+    margin-top: 110px;
+    color: #444;
+    display: inline-block;
+}
+#teamtitle{
+	font-size: 24px;
+	font-weight: 500;
+	line-height: 60px;
+	font-style: normal;
+}
+#title{
+	font-size: 24px;
+	font-weight: 500;
+	line-height: 60px;
+	font-style: normal;
+}
+#boxcenter{
+	margin-left: 186.5px;
+}
+h1{
+	font-family: 'Open Sans';
+	font-weight: 500;
+	padding: 20px;
+	color: #444;
+	font-style: normal;
+	font-variant: normal;
+	vertical-align: center;
+	margin: 0;
+}
+h1 a:visited{
+	color: #2165A6;
+}
+h1 a:link{
+	color: #2165A6;
+}
+h1 a:hover{
+	color: #D57433;
+	text-decoration: none;
+}
+h1 a:active{
+	color: #2165A6;
+}
+
+
+h2 {
+	font-family: 'Open Sans';
+	font-weight: 500;
+	line-height: 40px;
+	font-size: 22px;
+	text-align: center;
+	width: 100%;
+	max-width: 560px;
+  margin: 0 auto;
+  color: rgba(246, 253, 255, 0.92);
+  text-align: center;
+  background: #2A5C8C;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+
+}
+h3 {
+	font-family: 'Open Sans';
+	padding: 7px;
+	color: #444;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 500;
+	line-height: 18px;
+}
+b{
+	padding: 7px;
+	color: #444;
+}
+p{
+	margin-left: 40px;
+	margin-right: 150px;
+
+}
+.container{
+	margin: 0 auto;
+	clear: both;
+	width: 600px;
+	text-align: center;
+	height: auto;
+	display: flex;
+}
+.container2{
+	background-color: white;
+	width: 900px;
+	overflow: auto;
+}
+.container3{
+	margin: 0 auto;
+	clear: both;
+	width: 600px;
+	text-align: center;
+	height: auto;
+}
+.container br{
+	line-height: 180px;
+}
+.containermaps{
+	clear:both;
+	margin: 0 auto;
+	width: 440px;
+}
+.containermaps br{
+	line-height: 60px;
+}
+#winnerpane{
+	float: left;
+	width: 50px;
+	line-height: 60px;
+	background-color: #1E1E1E;
+	color: rgb(6, 255, 0);
+	text-align: center;
+	vertical-align: middle;
+	margin-bottom: 5px;
+}
+#midpane{
+	float: left;
+	width: 300px;
+	line-height: 60px;
+	text-align: center;
+	vertical-align: middle;
+	margin-bottom: 5px;
+}
+#loserpane{
+	float: left;
+	width:50px;
+	line-height: 60px;
+	background-color: #1E1E1E;
+	color: red;
+	text-align: center;
+	vertical-align: middle;
+	margin-bottom: 5px;
+}
+#scorepane{
+	float: left;
+	width:50px;
+	line-height: 60px;
+	background-color: #1E1E1E;
+	color: #E6E0E0;
+	text-align: center;
+	vertical-align: middle;
+	margin-bottom: 5px;
+}
+.wraplatestleft{
+	width: 430px;
+	float: left;
+	margin-right: 0px;
+}
+.wraplatestright{
+	width: 430px;
+	float: right;
+}
+.wraplatestcenter{
+	width: 700px;
+	margin: 0 auto;
+	text-align: center;
+}
+#gt{
+	margin-top: 220px;
+}
+#gtfo{
+	vertical-align: top;
+}
+#btn {
+  line-height: 3;
+  background-color: #233B52;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  vertical-align: middle;
+  font-size: 20px;
+  cursor: pointer;
+}
+#btn:hover {
+  background: #2A5C8C;
+  text-decoration: none;
+}
+#unavbtn {
+  line-height: 3;
+  background-color: #444444;
+  color: rgb(147, 147, 147);
+  text-decoration: none;
+  text-align: center;
+  padding: 10px;
+  vertical-align: middle;
+  font-size: 20px;
+  cursor: default;
+}
+.newsstory{
+	background-color: white;
+	margin: 0 auto;
+	width: 600px;
+	border: solid 1px;
+}
+.titlebar{
+	background-color: #233B52;
+	height: 25px;
+	padding: 8px;
+	vertical-align: middle;
+	color: white;
+}
+.titlebar b{
+	color: white;
+}
+.newscontent{
+	margin-left: 20px;
+	margin-right: 20px;
+	margin-top: 10px;
+}
