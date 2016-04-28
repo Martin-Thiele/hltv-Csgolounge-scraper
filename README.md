@@ -1,5 +1,5 @@
 # hltv & csgolounge scraper
-This project is no longer active since i have been banned from hltv. I will no longer keep it updated.
+####This project is no longer active since i have been banned from hltv. I will no longer keep it updated. As a last commit i have also added the webpage i created, as well as all the data i had gathered and database structure.
 
 
 
