@@ -1,5 +1,5 @@
 # hltv & csgolounge scraper
-####Update: The project will be developed further by another developer. But because of the reasons stated below, now website will be deployed using this bot.
+####Update: The project will be developed further by another developer. But because of the reasons stated below, a new website will be deployed using this bot.
 ####This project is no longer active since i have been banned from hltv. I will no longer keep it updated. As a last commit i have also added the webpage i created, as well as all the data i had gathered and database structure.
 
 
