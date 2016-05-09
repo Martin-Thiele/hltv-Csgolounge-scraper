@@ -18,7 +18,7 @@ import static csgoscraper.Database.getTid;
 
 
 public class Csglscraper {
-    static String userAgent = "Brinbot (+http://brintos.dk/csgo/brinbot.php)";
+    static String userAgent = "useragent";
     static ArrayList<Integer> scrapedodds1 = new ArrayList<>();
     static ArrayList<Integer> scrapedodds2 = new ArrayList<>();
     static ArrayList<String>  scrapedlinks = new ArrayList<>();
