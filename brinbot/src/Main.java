@@ -18,7 +18,7 @@ import static csgoscraper.Database.*;
 
 /**
  * @author Martin "Shrewbi" Thiele
- * @version 1.0.1
+ * @version 1.1.1
  * @since  1.0.1
 */
 // TODO: scrape csgl if link exists, but match not found on front page (Too many matches on their site)
@@ -122,7 +122,7 @@ public class Main {
             int subcid = getSubcid(competition);
 
             // Scrape for teams and add to arraylist
-            Elements teams = matchpage.select("div.centerfade span a.nolinkstyle");
+            Elements teams = matchpage.select("div > span > div > div > div > span > a");
             for (Element team : teams) {
                 scrapeteams.add(team.text());
             }
